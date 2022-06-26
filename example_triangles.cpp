@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-#include "check.h"
+#include "auxiliary.h"
 #include "grid_search.h"
 
 using namespace std;
@@ -65,6 +65,23 @@ int main() {
 
         // print details
         grid->print_details();
+
+        // find triangle given coords
+        x = {0.5, 0.5};
+        int ci = grid->container_index(x);
+        if (ci < 0) {
+            throw "point is outside grid";
+        }
+        auto iter = grid->containers.find(ci);
+        if (iter == grid->containers.end()) {
+            throw "cannot find containers with triangles under x";
+        }
+        auto container = iter->second;
+        for (const auto &[t, _] : container) {
+            if (is_point_in_triangle(x, triangles[t])) {
+                cout << "point is in triangle # " << t << endl;
+            }
+        }
 
         cout << "Done" << endl;
 
