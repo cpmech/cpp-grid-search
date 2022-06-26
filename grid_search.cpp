@@ -2,9 +2,10 @@
 
 #include <cmath>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <vector>
+
+#include "auxiliary.h"
 
 using namespace std;
 
@@ -71,12 +72,14 @@ std::unique_ptr<GridSearch> GridSearch::make_new(const std::unique_ptr<GridSearc
     }
     radius = sqrt(radius);
 
+    // coefficients
+    vector<size_t> cf = {1, options->ndiv[0], options->ndiv[0] * options->ndiv[1]};
+
     // other data
     size_t ncorner = pow(2, ndim);
-    auto cf = vector<size_t>(3);  // must be 3
     auto tol = vector<double>(ndim);
     auto halo = vector<vector<double>>(ncorner);
-    auto containers = map<Index, map<ID, Item>>();
+    auto containers = Containers_t();
     for (size_t i = 0; i < ndim; i++) {
         tol[i] = options->tol;
     }
@@ -131,6 +134,47 @@ void GridSearch::insert(size_t id, vector<double> &x) {
     }
 }
 
+// Find previously inserted item to the grid
+//
+// # Input
+//
+// * `x` -- coordinates (ndim) of the item
+//
+// # Output
+//
+// * `id` -- if found, returns the identification number of the item,
+//           otherwise returns -1 (not found)
+int GridSearch::find(vector<double> &x) {
+    // check
+    if (x.size() != this->ndim) {
+        throw "x.size() must equal ndim";
+    }
+
+    // find index of container where x should be
+    int index = this->container_index(x);
+    if (index < 0) {
+        throw "cannot find point with coordinates outside the grid";
+    }
+
+    // find container that should have a point near `x`
+    auto iter = this->containers.find(index);
+    if (iter == this->containers.end()) {
+        return -1;  // no container has a point near `x`
+    }
+
+    // find closest point to `x` in the container
+    auto container = iter->second;
+    for (const auto &[id, item] : container) {
+        auto y = item.x;
+        double distance = point_point_distance(x, y);
+        if (distance <= this->radius_tol) {
+            return item.id;
+        }
+    }
+
+    return -1;  // not found
+}
+
 // Calculates the container index where the point x should be located
 //
 // # Output
@@ -157,9 +201,11 @@ int GridSearch::container_index(vector<double> &x) {
 void GridSearch::update_or_insert(Index index, ID id, vector<double> &x) {
     auto iter = this->containers.find(index);
     if (iter == this->containers.end()) {
-        map<Index, Item> container = {{index, Item{id, x}}};
+        Container_t container = {{id, Item{id, x}}};
+        this->containers.insert({index, container});
     } else {
-        iter->second.insert({index, Item{id, x}});
+        Container_t &container = iter->second;
+        container.insert({id, Item{id, x}});
     }
 }
 
@@ -213,18 +259,24 @@ void GridSearch::set_halo(vector<double> &x) {
 }
 
 void GridSearch::print_details() {
+    cout << "number of non-empty containers = " << this->containers.size() << endl;
     for (const auto &[index, container] : this->containers) {
-        cout << index << ":";
+        cout << "container # " << index << ": items = [";
+        bool first = true;
         for (const auto &[id, item] : container) {
-            cout << id << "(";
+            if (!first) {
+                cout << ", ";
+            }
+            cout << id << ":(";
             for (size_t dim = 0; dim < this->ndim; dim++) {
                 cout << item.x[dim];
                 if (dim < this->ndim - 1) {
                     cout << ",";
                 }
             }
-            cout << ") ";
+            cout << ")";
+            first = false;
         }
-        cout << endl;
+        cout << "]" << endl;
     }
 }

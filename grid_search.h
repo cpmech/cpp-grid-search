@@ -18,6 +18,12 @@ struct Item {
     vector<double> x;  // (ndim) coordinates
 };
 
+// Specifies the type container
+typedef map<ID, Item> Container_t;
+
+// Specifies the type containers
+typedef map<Index, Container_t> Containers_t;
+
 // Holds the options for GridSearch
 //
 // * `min` -- (ndim) minimum coordinates to define the boundary
@@ -63,7 +69,7 @@ struct GridSearch {
 
     // holds non-empty containers. maps container.index to container.data
     // a point may be located in more than one container (e.g., when at internal boundaries)
-    map<Index, map<ID, Item>> containers;
+    Containers_t containers;
 
     // constants
     double radius;      // radius of the circumscribed circle of containers
@@ -73,10 +79,31 @@ struct GridSearch {
     static std::unique_ptr<GridSearch> make_new(const std::unique_ptr<GridSearchOptions> &options);
 
     // Inserts a new item to the right container in the grid
+    //
+    // # Input
+    //
+    // * `id` -- identification number for the item
+    // * `x` -- coordinates (ndim) of the item
     void insert(size_t id, vector<double> &x);
 
     // Calculates the container index where the point x should be located
+    //
+    // # Output
+    //
+    // * returns the index of the container or -1 if the point is out-of-range
     int container_index(vector<double> &x);
+
+    // Find previously inserted item to the grid
+    //
+    // # Input
+    //
+    // * `x` -- coordinates (ndim) of the item
+    //
+    // # Output
+    //
+    // * `id` -- if found, returns the identification number of the item,
+    //           otherwise returns -1 (not found)
+    int find(vector<double> &x);
 
     // Updates container or inserts point in an existing container
     void update_or_insert(Index index, ID id, vector<double> &x);
