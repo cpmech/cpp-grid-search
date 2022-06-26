@@ -25,6 +25,11 @@ int main() {
         vector<double> size_correct = {1.02, 1.02};
         assert(equal_vectors_tol(grid->size, size_correct, 1e-15));
 
+        vector<double> x = {1.0, 2.0};
+        grid->insert(123, x);
+
+        grid->print_details();
+
         cout << "Done" << endl;
 
     } catch (char const* msg) {

@@ -83,4 +83,7 @@ struct GridSearch {
 
     // Sets square/cubic halo around point
     void set_halo(vector<double> &x);
+
+    // Print details about the grid (e.g., for debugging)
+    void print_details();
 };

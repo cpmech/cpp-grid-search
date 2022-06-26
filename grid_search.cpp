@@ -1,6 +1,7 @@
 #include "grid_search.h"
 
 #include <cmath>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
@@ -112,18 +113,21 @@ void GridSearch::insert(size_t id, vector<double> &x) {
     }
 
     // add point to container
-    size_t index = this->container_index(x);
+    int index = this->container_index(x);
+    if (index < 0) {
+        throw "cannot insert point outside the grid";
+    }
     this->update_or_insert(index, id, x);
 
     // add point to containers touched by halo corners
     this->set_halo(x);
     for (size_t c = 0; c < this->ncorner; c++) {
-        // tmp.copy_from_slice(&self.halo[c][0..self.ndim]);
-        // if let Some(index_corner) = self.container_index(&tmp) {
-        //     if index_corner != index {
-        //         self.update_or_insert(index_corner, id, x); // make sure to use original `x`
-        //     }
-        // }
+        int index_corner = this->container_index(this->halo[c]);
+        if (index_corner >= 0) {
+            if (index_corner != index) {
+                this->update_or_insert(index_corner, id, x);  // make sure to use original `x`
+            }
+        }
     }
 }
 
@@ -133,7 +137,20 @@ void GridSearch::insert(size_t id, vector<double> &x) {
 //
 // * returns the index of the container or -1 if the point is out-of-range
 int GridSearch::container_index(vector<double> &x) {
-    return -1;  // out-of-range
+    auto ratio = vector<size_t>(this->ndim);  // ratio = trunc(δx[i]/Δx[i]) (Eq. 8)
+    size_t index = 0;
+    for (size_t i = 0; i < this->ndim; i++) {
+        if (x[i] < this->min[i] || x[i] > this->max[i]) {
+            return -1;  // out-of-range
+        }
+        ratio[i] = (size_t)((x[i] - this->min[i]) / this->size[i]);
+        if (ratio[i] == this->ndiv[i]) {
+            // the point is exactly on the max edge, thus select inner container
+            ratio[i] -= 1;  // move to the inside
+        }
+        index += ratio[i] * this->cf[i];
+    }
+    return index;
 }
 
 // Updates container or inserts point in an existing container
@@ -192,5 +209,22 @@ void GridSearch::set_halo(vector<double> &x) {
         this->halo[7][0] = x[0] - this->tol[0];
         this->halo[7][1] = x[1] + this->tol[1];
         this->halo[7][2] = x[2] + this->tol[2];
+    }
+}
+
+void GridSearch::print_details() {
+    for (const auto &[index, container] : this->containers) {
+        cout << index << ":";
+        for (const auto &[id, item] : container) {
+            cout << id << "(";
+            for (size_t dim = 0; dim < this->ndim; dim++) {
+                cout << item.x[dim];
+                if (dim < this->ndim - 1) {
+                    cout << ",";
+                }
+            }
+            cout << ") ";
+        }
+        cout << endl;
     }
 }
