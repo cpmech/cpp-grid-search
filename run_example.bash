@@ -4,5 +4,6 @@ mkdir -p build
 cd build
 cmake ../
 make
-./example
+#./example
+./example_triangles
 

@@ -46,6 +46,7 @@ add_library(${LIB_NAME} SHARED
 
 set(BINS
     example
+    example_triangles
 )
 
 foreach(var ${BINS})
