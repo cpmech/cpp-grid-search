@@ -6,6 +6,13 @@
 
 using namespace std;
 
+// Specifies the index of containers (or bins in the grid)
+typedef size_t Index;
+
+// Specifies the identification number of items
+typedef size_t ID;
+
+// Holds the id and coordinates of an item
 struct Item {
     size_t id;         // identification number
     vector<double> x;  // (ndim) coordinates
@@ -32,7 +39,13 @@ struct GridSearchOptions {
     static std::unique_ptr<GridSearchOptions> make_new();
 };
 
-// Implements the GridSearch tool
+// Implements a grid for fast searching entries by coordinates
+//
+// # Reference
+//
+// * Durand, Farias, and Pedroso (2015) Computing intersections between
+//   non-compatible curves and finite elements, Computational Mechanics;
+//   DOI=10.1007/s00466-015-1181-y
 struct GridSearch {
     // constants
     size_t ndim;           // space dimension
@@ -50,7 +63,7 @@ struct GridSearch {
 
     // holds non-empty containers. maps container.index to container.data
     // a point may be located in more than one container (e.g., when at internal boundaries)
-    map<size_t, map<size_t, Item>> containers;
+    map<Index, map<ID, Item>> containers;
 
     // constants
     double radius;      // radius of the circumscribed circle of containers
@@ -58,4 +71,16 @@ struct GridSearch {
 
     // Allocates new instance
     static std::unique_ptr<GridSearch> make_new(const std::unique_ptr<GridSearchOptions> &options);
+
+    // Inserts a new item to the right container in the grid
+    void insert(size_t id, vector<double> &x);
+
+    // Calculates the container index where the point x should be located
+    int container_index(vector<double> &x);
+
+    // Updates container or inserts point in an existing container
+    void update_or_insert(Index index, ID id, vector<double> &x);
+
+    // Sets square/cubic halo around point
+    void set_halo(vector<double> &x);
 };

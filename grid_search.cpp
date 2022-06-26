@@ -75,7 +75,7 @@ std::unique_ptr<GridSearch> GridSearch::make_new(const std::unique_ptr<GridSearc
     auto cf = vector<size_t>(3);  // must be 3
     auto tol = vector<double>(ndim);
     auto halo = vector<vector<double>>(ncorner);
-    auto containers = map<size_t, map<size_t, Item>>();
+    auto containers = map<Index, map<ID, Item>>();
     for (size_t i = 0; i < ndim; i++) {
         tol[i] = options->tol;
     }
@@ -98,3 +98,99 @@ std::unique_ptr<GridSearch> GridSearch::make_new(const std::unique_ptr<GridSearc
             containers,
         }};
 };
+
+// Inserts a new item to the right container in the grid
+//
+// # Input
+//
+// * `id` -- identification number for the item
+// * `x` -- coordinates (ndim) of the item
+void GridSearch::insert(size_t id, vector<double> &x) {
+    // check
+    if (x.size() != this->ndim) {
+        throw "x.size() must equal ndim";
+    }
+
+    // add point to container
+    size_t index = this->container_index(x);
+    this->update_or_insert(index, id, x);
+
+    // add point to containers touched by halo corners
+    this->set_halo(x);
+    for (size_t c = 0; c < this->ncorner; c++) {
+        // tmp.copy_from_slice(&self.halo[c][0..self.ndim]);
+        // if let Some(index_corner) = self.container_index(&tmp) {
+        //     if index_corner != index {
+        //         self.update_or_insert(index_corner, id, x); // make sure to use original `x`
+        //     }
+        // }
+    }
+}
+
+// Calculates the container index where the point x should be located
+//
+// # Output
+//
+// * returns the index of the container or -1 if the point is out-of-range
+int GridSearch::container_index(vector<double> &x) {
+    return -1;  // out-of-range
+}
+
+// Updates container or inserts point in an existing container
+void GridSearch::update_or_insert(Index index, ID id, vector<double> &x) {
+    auto iter = this->containers.find(index);
+    if (iter == this->containers.end()) {
+        map<Index, Item> container = {{index, Item{id, x}}};
+    } else {
+        iter->second.insert({index, Item{id, x}});
+    }
+}
+
+/// Sets square/cubic halo around point
+void GridSearch::set_halo(vector<double> &x) {
+    if (this->ndim == 2) {
+        this->halo[0][0] = x[0] - this->tol[0];
+        this->halo[0][1] = x[1] - this->tol[1];
+
+        this->halo[1][0] = x[0] + this->tol[0];
+        this->halo[1][1] = x[1] - this->tol[1];
+
+        this->halo[2][0] = x[0] + this->tol[0];
+        this->halo[2][1] = x[1] + this->tol[1];
+
+        this->halo[3][0] = x[0] - this->tol[0];
+        this->halo[3][1] = x[1] + this->tol[1];
+    } else {
+        this->halo[0][0] = x[0] - this->tol[0];
+        this->halo[0][1] = x[1] - this->tol[1];
+        this->halo[0][2] = x[2] - this->tol[2];
+
+        this->halo[1][0] = x[0] + this->tol[0];
+        this->halo[1][1] = x[1] - this->tol[1];
+        this->halo[1][2] = x[2] - this->tol[2];
+
+        this->halo[2][0] = x[0] + this->tol[0];
+        this->halo[2][1] = x[1] + this->tol[1];
+        this->halo[2][2] = x[2] - this->tol[2];
+
+        this->halo[3][0] = x[0] - this->tol[0];
+        this->halo[3][1] = x[1] + this->tol[1];
+        this->halo[3][2] = x[2] - this->tol[2];
+
+        this->halo[4][0] = x[0] - this->tol[0];
+        this->halo[4][1] = x[1] - this->tol[1];
+        this->halo[4][2] = x[2] + this->tol[2];
+
+        this->halo[5][0] = x[0] + this->tol[0];
+        this->halo[5][1] = x[1] - this->tol[1];
+        this->halo[5][2] = x[2] + this->tol[2];
+
+        this->halo[6][0] = x[0] + this->tol[0];
+        this->halo[6][1] = x[1] + this->tol[1];
+        this->halo[6][2] = x[2] + this->tol[2];
+
+        this->halo[7][0] = x[0] - this->tol[0];
+        this->halo[7][1] = x[1] + this->tol[1];
+        this->halo[7][2] = x[2] + this->tol[2];
+    }
+}

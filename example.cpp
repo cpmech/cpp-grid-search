@@ -25,6 +25,8 @@ int main() {
         vector<double> size_correct = {1.02, 1.02};
         assert(equal_vectors_tol(grid->size, size_correct, 1e-15));
 
+        cout << "Done" << endl;
+
     } catch (char const* msg) {
         cout << "ERROR: " << msg << endl;
     } catch (...) {
