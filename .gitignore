@@ -1,5 +1,6 @@
+build/
 CMakeCache.txt
-CMakeFiles
+CMakeFiles/
 cmake_install.cmake
 CTestTestfile.cmake
 example
