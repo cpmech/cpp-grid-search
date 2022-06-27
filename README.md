@@ -2,41 +2,32 @@
 
 ## Concept
 
-A grid is composed of containers. The container (aka "bin") is uniquely identified by its
-"left-most" corner. Any coordinated in 2D or 3D can be quickly compared with the "left-most"
-corner; therefore we can find coordinates efficiently.
+A grid is composed of containers. The container (aka "bin") is uniquely identified by its "left-most" corner (aka **key**). Any coordinate in 2D or 3D can be quickly compared with the "left-most" corner; therefore, we can find coordinates efficiently.
 
-To avoid repetition (save space and be more efficient) we store all coordinates in a nested map.
-The outer map is a set of containers whereas the inner map is a set of items. The outer map
-maps `index-to-container`. The inner map maps `id-to-item`.
-
-To use the grid, we fist insert items using the `insert` command. Then, we can find any
-item by using the `find` command.
-
-This idea is illustrated below:
-
-```cpp
-auto options = GridSearchOptions::make_new();
-auto grid = GridSearch::make_new(options);
-vector<double> x = {0.5, 0.5};
-grid->insert(100, x);
-auto id = grid->find(x);
-// will return id = 100
-```
+To avoid repetition, save space, and be more efficient, we store all coordinates in a nested data structure. The outer structure is a map of containers that maps the container key to the inner data structure. The inner structure is a set that holds unique identifiers.
 
 ## Full Example
 
-Output of [example.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example.cpp):
+Output of [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
 
 ```text
 Running example
-number of non-empty containers = 3
-container # 0: items = [100:(0.5,0.5), 200:(0.8,0.5)]
-container # 1: items = [300:(1,0.5)]
-container # 8: items = [400:(2.9,2.9)]
-found id=100 near (0.5,0.5)
-found id=300 near (1,0.5)
-found id=400 near (2.9,2.9)
-found id=-1 near (3,3)
+number of non-empty containers = 15
+container # 33: items = [1, 5, 11]
+container # 34: items = [7]
+container # 35: items = [5, 7, 11]
+container # 43: items = [0, 1, 2, 3, 5, 11]
+container # 44: items = [2, 3, 6, 7]
+container # 45: items = [0, 5, 6, 7, 8, 9, 11]
+container # 46: items = [8]
+container # 53: items = [0, 3, 4, 10]
+container # 54: items = [3, 6]
+container # 55: items = [0, 4, 6, 9]
+container # 56: items = [10]
+container # 63: items = [2, 4, 10]
+container # 64: items = [2]
+container # 65: items = [4, 8]
+container # 66: items = [8, 10]
+found triangle with id = 6
 Done
 ```
