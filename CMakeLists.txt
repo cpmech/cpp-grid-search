@@ -45,7 +45,6 @@ add_library(${LIB_NAME} SHARED
 # main ###################################################################################
 
 set(BINS
-    example
     example_triangles
 )
 

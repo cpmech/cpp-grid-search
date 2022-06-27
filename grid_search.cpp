@@ -11,272 +11,220 @@ using namespace std;
 
 // Allocates new instance
 std::unique_ptr<GridSearchOptions> GridSearchOptions::make_new() {
-    vector<double> min = {0.0, 0.0};
-    vector<double> max = {10.0, 10.0};
     double expansion = 0.01;
+    vector<double> xmin = {0.0, 0.0};
+    vector<double> xmax = {10.0, 10.0};
+    vector<double> tols = {1e-4, 1e-4};
     vector<size_t> ndiv = {5, 5};
-    double tol = 1e-4;
     return std::unique_ptr<GridSearchOptions>{new GridSearchOptions{
-        min,
-        max,
         expansion,
+        xmin,
+        xmax,
+        tols,
         ndiv,
-        tol,
     }};
 }
 
 // Allocates new instance
 std::unique_ptr<GridSearch> GridSearch::make_new(const std::unique_ptr<GridSearchOptions> &options) {
     // space dimension
-    size_t ndim = options->min.size();
+    size_t ndim = options->xmin.size();
     if (ndim < 2 || ndim > 3) {
         throw "min.size() = ndim must be 2 or 3";
     }
-    if (options->max.size() != ndim) {
+    if (options->xmax.size() != ndim) {
         throw "max.len() must equal ndim = min.len()";
     }
 
     // expanded borders
-    auto vec_min = vector<double>(ndim);
-    auto vec_max = vector<double>(ndim);
+    auto xmin = vector<double>(ndim);
+    auto xmax = vector<double>(ndim);
     for (size_t i = 0; i < ndim; i++) {
-        double del = options->max[i] - options->min[i];
-        vec_min[i] = options->min[i] - options->expansion * del;
-        vec_max[i] = options->max[i] + options->expansion * del;
+        double delta = options->xmax[i] - options->xmin[i];
+        xmin[i] = options->xmin[i] - options->expansion * delta;
+        xmax[i] = options->xmax[i] + options->expansion * delta;
     }
-
-    // set radius tolerance
-    double radius_tol = 0.0;
-    for (size_t i = 0; i < ndim; i++) {
-        radius_tol += options->tol * options->tol;
-    }
-    radius_tol = sqrt(radius_tol);
 
     // compute sizes
-    double radius = 0.0;
     auto delta = vector<double>(ndim);
-    auto size = vector<double>(ndim);
+    auto side_length = vector<double>(ndim);
     for (size_t i = 0; i < ndim; i++) {
         if (options->ndiv[i] < 1) {
             throw "ndiv must be ≥ 1";
         }
-        delta[i] = vec_max[i] - vec_min[i];
+        delta[i] = xmax[i] - xmin[i];
         if (delta[i] <= 0.0) {
-            throw "max must be greater than min";
+            throw "xmax must be greater than xmin";
         }
-        size[i] = delta[i] / ((double)options->ndiv[i]);
-        if (size[i] <= 2.0 * options->tol) {
-            throw "container size = (max-min)/ndiv must be > 2·tol; reduce ndiv or tol";
+        side_length[i] = delta[i] / ((double)options->ndiv[i]);
+        if (side_length[i] <= 2.0 * options->tols[i]) {
+            throw "container side_length = (xmax-xmin)/ndiv must be > 2·tol; reduce ndiv or tol";
         }
-        radius += size[i] * size[i] / 4.0;
     }
-    radius = sqrt(radius);
 
     // coefficients
-    vector<size_t> cf = {1, options->ndiv[0], options->ndiv[0] * options->ndiv[1]};
+    vector<size_t> coefficient = {1, options->ndiv[0], options->ndiv[0] * options->ndiv[1]};
 
-    // other data
-    size_t ncorner = pow(2, ndim);
-    auto tol = vector<double>(ndim);
-    auto halo = vector<vector<double>>(ncorner);
+    // containers
     auto containers = Containers_t();
-    for (size_t i = 0; i < ndim; i++) {
-        tol[i] = options->tol;
-    }
-    for (size_t m = 0; m < ncorner; m++) {
-        halo[m] = vector<double>(ndim);
-    }
 
     return std::unique_ptr<GridSearch>{
         new GridSearch{
             ndim,
+            options->expansion,
+            xmin,
+            xmax,
+            options->tols,
             options->ndiv,
-            vec_min,
-            vec_max,
             delta,
-            size,
-            cf,
-            tol,
-            halo,
-            ncorner,
+            side_length,
+            coefficient,
             containers,
         }};
 };
 
-// Inserts a new item to the right container in the grid
-//
-// # Input
-//
-// * `id` -- identification number for the item
-// * `x` -- coordinates (ndim) of the item
-void GridSearch::insert(size_t id, vector<double> &x) {
-    // check
-    if (x.size() != this->ndim) {
-        throw "x.size() must equal ndim";
-    }
+// Inserts cells (e.g., triangles or tetrahedra) to the correct containers in the grid
+void GridSearch::insert_cells(vector<vector<vector<double>>> &mesh) {
+    // auxiliary data
+    auto cell_xmin = vector<double>(this->ndim);
+    auto cell_xmax = vector<double>(this->ndim);
+    auto xcorner = vector<double>(this->ndim);
 
-    // add point to container
-    int index = this->container_index(x);
-    if (index < 0) {
-        throw "cannot insert point outside the grid";
-    }
-    this->update_or_insert(index, id, x);
+    // loop over all cells
+    for (size_t cell_id = 0; cell_id < mesh.size(); cell_id++) {
+        // auxiliary reference to cell
+        vector<vector<double>> const &cell = mesh[cell_id];
 
-    // add point to containers touched by halo corners
-    this->set_halo(x);
-    for (size_t c = 0; c < this->ncorner; c++) {
-        int index_corner = this->container_index(this->halo[c]);
-        if (index_corner >= 0) {
-            if (index_corner != index) {
-                this->update_or_insert(index_corner, id, x);  // make sure to use original `x`
+        // check
+        size_t nnode = cell.size();
+        if (nnode < 3 || nnode > 4) {
+            throw "cell.size() == nnode must be 3 (triangle) or 4 (tetrahedron)";
+        }
+
+        // loop over the bounding box of the cell
+        compute_bounding_box(this->expansion, cell_xmin, cell_xmax, cell);
+        if (this->ndim == 2) {
+            // lower left
+            xcorner[0] = cell_xmin[0];
+            xcorner[1] = cell_xmin[1];
+            int key = this->_get_container_key(xcorner);
+            if (key < 0) {
+                throw "lower left corner is outside the grid!";
             }
+            this->_update_or_insert_point(key, cell_id, xcorner);
+
+            // lower right
+            xcorner[0] = cell_xmax[0];
+            xcorner[1] = cell_xmin[1];
+            key = this->_get_container_key(xcorner);
+            if (key < 0) {
+                throw "lower right corner is outside the grid!";
+            }
+            this->_update_or_insert_point(key, cell_id, xcorner);
+
+            // upper left
+            xcorner[0] = cell_xmin[0];
+            xcorner[1] = cell_xmax[1];
+            key = this->_get_container_key(xcorner);
+            if (key < 0) {
+                throw "upper left corner is outside the grid!";
+            }
+            this->_update_or_insert_point(key, cell_id, xcorner);
+
+            // upper right
+            xcorner[0] = cell_xmax[0];
+            xcorner[1] = cell_xmax[1];
+            key = this->_get_container_key(xcorner);
+            if (key < 0) {
+                throw "upper right corner is outside the grid!";
+            }
+            this->_update_or_insert_point(key, cell_id, xcorner);
+        } else {
+            // TODO
+            throw "TODO: 3D version";
         }
     }
 }
 
-// Find previously inserted item to the grid
-//
-// # Input
-//
-// * `x` -- coordinates (ndim) of the item
-//
-// # Output
-//
-// * `id` -- if found, returns the identification number of the item,
-//           otherwise returns -1 (not found)
-int GridSearch::find(vector<double> &x) {
+// Find the cell (e.g., triangle or tetrahedron) where the given coordinate falls in
+int GridSearch::find_cell(vector<double> &x, vector<vector<vector<double>>> &mesh) {
     // check
     if (x.size() != this->ndim) {
         throw "x.size() must equal ndim";
     }
 
-    // find index of container where x should be
-    int index = this->container_index(x);
-    if (index < 0) {
-        throw "cannot find point with coordinates outside the grid";
+    // compute the key of the container where x should be
+    int key = this->_get_container_key(x);
+    if (key < 0) {
+        throw "cannot perform a search with coordinates outside the limits";
     }
 
-    // find container that should have a point near `x`
-    auto iter = this->containers.find(index);
+    // extract the container data from the map of containers
+    auto iter = this->containers.find(key);
     if (iter == this->containers.end()) {
-        return -1;  // no container has a point near `x`
+        return -1;  // there is not container set the key corresponding to x
     }
 
-    // find closest point to `x` in the container
+    // check if point is within triangle/tetrahedron
     auto container = iter->second;
-    for (const auto &[id, item] : container) {
-        auto y = item.x;
-        double distance = point_point_distance(x, y);
-        if (distance <= this->radius_tol) {
-            return item.id;
+    for (const auto &id : container) {
+        auto cell = mesh[id];
+        if (this->ndim == 2) {
+            if (is_point_in_triangle(x, cell)) {
+                return id;
+            }
+        } else {
+            if (is_point_in_tetrahedron(x, cell)) {
+                return id;
+            }
         }
     }
 
     return -1;  // not found
 }
 
-// Calculates the container index where the point x should be located
-//
-// # Output
-//
-// * returns the index of the container or -1 if the point is out-of-range
-int GridSearch::container_index(vector<double> &x) {
+void GridSearch::print_details() {
+    cout << "number of non-empty containers = " << this->containers.size() << endl;
+    for (const auto &[key, container] : this->containers) {
+        cout << "container # " << key << ": items = [";
+        bool first = true;
+        for (const auto &id : container) {
+            if (!first) {
+                cout << ", ";
+            }
+            cout << id;
+            first = false;
+        }
+        cout << "]" << endl;
+    }
+}
+
+// Calculates the key of the container where the point x should be located
+int GridSearch::_get_container_key(vector<double> &x) {
     auto ratio = vector<size_t>(this->ndim);  // ratio = trunc(δx[i]/Δx[i]) (Eq. 8)
-    size_t index = 0;
+    size_t key = 0;
     for (size_t i = 0; i < this->ndim; i++) {
-        if (x[i] < this->min[i] || x[i] > this->max[i]) {
+        if (x[i] < this->xmin[i] || x[i] > this->xmax[i]) {
             return -1;  // out-of-range
         }
-        ratio[i] = (size_t)((x[i] - this->min[i]) / this->size[i]);
+        ratio[i] = (size_t)((x[i] - this->xmin[i]) / this->side_length[i]);
         if (ratio[i] == this->ndiv[i]) {
             // the point is exactly on the max edge, thus select inner container
             ratio[i] -= 1;  // move to the inside
         }
-        index += ratio[i] * this->cf[i];
+        key += ratio[i] * this->coefficient[i];
     }
-    return index;
+    return key;
 }
 
-// Updates container or inserts point in an existing container
-void GridSearch::update_or_insert(Index index, ID id, vector<double> &x) {
-    auto iter = this->containers.find(index);
+// Updates a container or inserts a point into an existing container
+void GridSearch::_update_or_insert_point(ContainerKey key, ItemID id, vector<double> &x) {
+    auto iter = this->containers.find(key);
     if (iter == this->containers.end()) {
-        Container_t container = {{id, Item{id, x}}};
-        this->containers.insert({index, container});
+        Container_t container = {{id}};
+        this->containers.insert({key, container});
     } else {
         Container_t &container = iter->second;
-        container.insert({id, Item{id, x}});
-    }
-}
-
-/// Sets square/cubic halo around point
-void GridSearch::set_halo(vector<double> &x) {
-    if (this->ndim == 2) {
-        this->halo[0][0] = x[0] - this->tol[0];
-        this->halo[0][1] = x[1] - this->tol[1];
-
-        this->halo[1][0] = x[0] + this->tol[0];
-        this->halo[1][1] = x[1] - this->tol[1];
-
-        this->halo[2][0] = x[0] + this->tol[0];
-        this->halo[2][1] = x[1] + this->tol[1];
-
-        this->halo[3][0] = x[0] - this->tol[0];
-        this->halo[3][1] = x[1] + this->tol[1];
-    } else {
-        this->halo[0][0] = x[0] - this->tol[0];
-        this->halo[0][1] = x[1] - this->tol[1];
-        this->halo[0][2] = x[2] - this->tol[2];
-
-        this->halo[1][0] = x[0] + this->tol[0];
-        this->halo[1][1] = x[1] - this->tol[1];
-        this->halo[1][2] = x[2] - this->tol[2];
-
-        this->halo[2][0] = x[0] + this->tol[0];
-        this->halo[2][1] = x[1] + this->tol[1];
-        this->halo[2][2] = x[2] - this->tol[2];
-
-        this->halo[3][0] = x[0] - this->tol[0];
-        this->halo[3][1] = x[1] + this->tol[1];
-        this->halo[3][2] = x[2] - this->tol[2];
-
-        this->halo[4][0] = x[0] - this->tol[0];
-        this->halo[4][1] = x[1] - this->tol[1];
-        this->halo[4][2] = x[2] + this->tol[2];
-
-        this->halo[5][0] = x[0] + this->tol[0];
-        this->halo[5][1] = x[1] - this->tol[1];
-        this->halo[5][2] = x[2] + this->tol[2];
-
-        this->halo[6][0] = x[0] + this->tol[0];
-        this->halo[6][1] = x[1] + this->tol[1];
-        this->halo[6][2] = x[2] + this->tol[2];
-
-        this->halo[7][0] = x[0] - this->tol[0];
-        this->halo[7][1] = x[1] + this->tol[1];
-        this->halo[7][2] = x[2] + this->tol[2];
-    }
-}
-
-void GridSearch::print_details() {
-    cout << "number of non-empty containers = " << this->containers.size() << endl;
-    for (const auto &[index, container] : this->containers) {
-        cout << "container # " << index << ": items = [";
-        bool first = true;
-        for (const auto &[id, item] : container) {
-            if (!first) {
-                cout << ", ";
-            }
-            cout << id << ":(";
-            for (size_t dim = 0; dim < this->ndim; dim++) {
-                cout << item.x[dim];
-                if (dim < this->ndim - 1) {
-                    cout << ",";
-                }
-            }
-            cout << ")";
-            first = false;
-        }
-        cout << "]" << endl;
+        container.insert({id});
     }
 }
