@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 
-#include "auxiliary.h"
 #include "grid_search.h"
 
 using namespace std;

@@ -34,14 +34,6 @@ endif(A_MAKE_OPTIMIZED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# library ####################################################################################
-
-set(LIB_NAME "gridsearch")
-
-add_library(${LIB_NAME} SHARED
-    grid_search.cpp
-)
-
 # main ###################################################################################
 
 set(BINS
