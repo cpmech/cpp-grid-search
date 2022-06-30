@@ -22,9 +22,6 @@ int main() {
         // allocate grid
         auto grid = GridSearch::make_new(tris.size(), get_x);
 
-        // print details
-        grid->print_details();
-
         // check data
         double max_len = 1.0;
         double sl = max_len + 2.0 * GS_TOLERANCE;  // because the bbox is expanded
@@ -44,6 +41,8 @@ int main() {
         assert(equal_vectors(bbox_1[0], x_min_max_correct[0]));
         assert(equal_vectors(bbox_1[1], x_min_max_correct[1]));
         assert(grid->containers.size() == 4);
+
+        cout << "OK" << endl;
 
     } catch (char const *msg) {
         cout << "ERROR: " << msg << endl;
