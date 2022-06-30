@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>

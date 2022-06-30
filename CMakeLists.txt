@@ -38,6 +38,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(BINS
     example_triangles
+    test_new_works_1
 )
 
 foreach(var ${BINS})

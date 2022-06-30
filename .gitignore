@@ -6,3 +6,4 @@ CTestTestfile.cmake
 example
 Makefile
 *.so
+test_new_works_1
