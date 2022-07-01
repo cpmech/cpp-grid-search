@@ -71,7 +71,13 @@ where `in_triangle` implements the algorithm to detect if a point is inside the 
 
 ## Full Example
 
-Output of [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
+Given the following mesh:
+
+![example_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_triangles.svg)
+
+Find points using [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
+
+Output:
 
 ```text
 GridSearch
