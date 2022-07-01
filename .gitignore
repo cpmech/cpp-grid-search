@@ -6,4 +6,5 @@ CTestTestfile.cmake
 example
 Makefile
 *.so
+example_triangles
 test_new_works_1

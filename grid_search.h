@@ -235,7 +235,7 @@ struct GridSearch {
         // check if the point is out-of-bounds
         for (size_t i = 0; i < NDIM; i++) {
             if (x[i] < this->xmin[i] || x[i] > this->xmax[i]) {
-                throw "given point coordinates are outsize the grid";
+                throw "given point coordinates are outside the grid";
             }
         }
 
