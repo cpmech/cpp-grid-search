@@ -243,7 +243,7 @@ struct GridSearch {
         auto key = calc_container_key(this->side_length, this->ndiv, this->xmin, x);
         auto iter = this->containers.find(key);
         if (iter == this->containers.end()) {
-            return -1;  // there is not container set the key corresponding to x
+            return -1;  // there is no container for the key corresponding to x
         }
 
         // find the cell where the point falls in
