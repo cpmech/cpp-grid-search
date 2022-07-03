@@ -54,6 +54,12 @@ int main() {
         cout << "T = " << tt << " (" << correct << ") error = " << error << endl;
         assert(error < 0.025);
 
+        // handle NaN
+        x = {0.5, 1.5};
+        tt = grid->find_triangle_and_interpolate(x, coordinates, triangles);
+        cout << "T = " << tt << endl;
+        assert(isnan(tt));
+
         cout << "OK" << endl;
 
     } catch (char const *msg) {

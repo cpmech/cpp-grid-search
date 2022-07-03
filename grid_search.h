@@ -347,7 +347,7 @@ struct GridSearch {
     // # Output
     //
     // Returns the value (e.g., temperature) at the target point (xp) inside the triangle.
-    // Throws an exception if no triangle contains the point.
+    // Returns NaN if no triangle contains the point.
     //
     // # Warning (Exceptions)
     //
@@ -408,7 +408,7 @@ struct GridSearch {
         }
 
         // not found
-        throw "cannot find triangle where point falls in";
+        return std::numeric_limits<double>::quiet_NaN();
     }
 
     // Print details about the grid (e.g., for debugging)
