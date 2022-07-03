@@ -38,8 +38,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(BINS
     example_triangles
-    seg_fault_does_not_happen
-    seg_fault_happens
     test_new_works_1
     test_find_works_1
 )
