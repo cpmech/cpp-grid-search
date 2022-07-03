@@ -372,7 +372,7 @@ struct GridSearch {
         auto key = calc_container_key(this->side_length, this->ndiv, this->xmin, x);
         auto iter = this->containers.find(key);
         if (iter == this->containers.end()) {
-            return -1;  // there is no container for the key corresponding to x
+            return std::numeric_limits<double>::quiet_NaN();  // there is no container for the key corresponding to x
         }
 
         // find the triangle where the point falls in
