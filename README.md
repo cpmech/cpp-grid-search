@@ -39,35 +39,19 @@ You only need to copy-n-paste the file `grid_search.h` into your project and use
 First, we allocate the grid:
 
 ```c++
-auto grid = GridSearch::make_new(tris.size(), get_x);
+auto grid = GridSearch::make_new(coordinates, triangles);
 ```
 
-where `get_x` is a lambda function that returns an access to the coordinates of point `m` of triangle `t`. This could be read from two lists of coordinates and connectivity or directly from the x-y values tabled in a nested vector data structure (see, e.g., `tris` in the example). The `get_x` lambda is such that:
+where `coordinates` is a table with the x-y-temperature data; i.e., the third column contains the values to be interpolated. 
 
-```c++
-auto get_x = [&tris](size_t t, size_t m) {
-    return &tris[t][m];
-};
-```
-
-Note that `get_x` returns a pointer to the innermost vector in `vector<vector<vector<double>>> tris`.
-
-Second, we can search for cells containing points using the fragment below:
+Second, we can interpolate values as follows:
 
 ```c++
 vector<double> x = {0.5, 0.5};
-auto id = grid->find_cell(x, is_in_cell);
+auto temperature = grid->find_triangle_and_interpolate(x, coordinates, triangles);
 ```
 
-where `is_in_cell` is another lambda function that determines if the point is inside the geometric shape (triangle). For example:
-
-```c++
-auto is_in_cell = [&tris](size_t t, vector<double> const *x) {
-    return in_triangle(tris[t][0], tris[t][1], tris[t][2], (*x));
-};
-```
-
-where `in_triangle` implements the algorithm to detect if a point is inside the triangle, given its vertices.
+where we must pass the same `coordinates` and `triangles` used in `new`.
 
 ## Full Example
 
@@ -80,19 +64,8 @@ Interpolate data using [example_triangles.cpp](https://github.com/cpmech/cpp-gri
 Output:
 
 ```text
-GridSearch
-==========
-number of non-empty containers = 4
-container # 0: cells = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-container # 1: cells = [8, 10]
-container # 2: cells = [2, 4, 8, 10]
-container # 3: cells = [8, 10]
-
 x = {0.5, 0.5}
-found triangle with id = 6
-
-x = {0.4, 0.2}
-found triangle with id = 11
+temperature = 0.785973
 ```
 
 ## Reference
