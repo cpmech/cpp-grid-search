@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include <functional>
+#include <iostream>
 #include <limits>
 #include <map>
 #include <memory>
@@ -55,6 +55,36 @@ inline bool in_triangle(vector<double> const &xa,
     return ((na && nb && nc) || (!na && !nb && !nc));
 }
 
+// Interpolates a value at a given point over a triangle
+//
+// See file data/derivations/interpolation-over-triangle.pdf
+//
+// # Input
+//
+// `xa,xb,xc` -- are the coordinates of the triangle vertices (each: len = 2 = ndim)
+// `temp` -- are the known values at the triangle vertices; e.g., the temperatures (len = 3)
+// `xp` -- are the coordinates of the point of interest (len = ndim)
+//
+// # Output
+//
+// Returns the "temperature" `T @ x`
+//
+// # Panics
+//
+// This function will panic if the array sizes are incorrect
+inline double triangle_interpolation(
+    vector<double> const &xa,
+    vector<double> const &xb,
+    vector<double> const &xc,
+    vector<double> const &temp,
+    vector<double> const &xp) {
+    double aa2 = xa[0] * (xb[1] - xc[1]) + xb[0] * (xc[1] - xa[1]) + xc[0] * (xa[1] - xb[1]);
+    double zeta_0 = (xp[0] * (xb[1] - xc[1]) + xb[0] * (xc[1] - xp[1]) + xc[0] * (xp[1] - xb[1])) / aa2;
+    double zeta_1 = (xa[0] * (xp[1] - xc[1]) + xp[0] * (xc[1] - xa[1]) + xc[0] * (xa[1] - xp[1])) / aa2;
+    double zeta_2 = (xa[0] * (xb[1] - xp[1]) + xb[0] * (xp[1] - xa[1]) + xp[0] * (xa[1] - xb[1])) / aa2;
+    return zeta_0 * temp[0] + zeta_1 * temp[1] + zeta_2 * temp[2];
+}
+
 // GridSearch tolerance for all directions
 const double GS_TOLERANCE = 1e-4;
 
@@ -64,16 +94,16 @@ const double GS_BORDER_TOL = 1e-2;
 // Specifies the key of containers (or bins in the grid)
 typedef size_t ContainerKey;
 
-// Specifies the identification number of cells (must be sequential from 0 to ncell - 1)
-typedef size_t CellId;
+// Specifies the identification number of triangles (must be sequential from 0 to ntriangle - 1)
+typedef size_t TriangleId;
 
 // Defines the container type
-typedef set<CellId> Container_t;
+typedef set<TriangleId> Container_t;
 
 // Defines the containers type
 typedef map<ContainerKey, Container_t> Containers_t;
 
-// Defines the bounding box of a cell
+// Defines the bounding box of a triangle
 const size_t N_MIN_MAX = 2;  // 2 means {min,max}
 const size_t I_MIN = 0;
 const size_t I_MAX = 1;
@@ -83,7 +113,7 @@ typedef vector<vector<double>> BboxMinMax;  // [ndim][N_MIN_MAX]
 const size_t NDIM = 2;   // 2D
 const size_t NNODE = 3;  // Triangles
 
-// Defines a tool to search the cell where a point is located within a mesh
+// Defines a tool to search the triangle where a point is located within a mesh
 //
 // # Reference
 //
@@ -95,7 +125,7 @@ struct GridSearch {
     vector<double> xmin;                // (NDIM) min values
     vector<double> xmax;                // (NDIM) max values
     double side_length;                 // side length of a container
-    vector<BboxMinMax> bounding_boxes;  // (NCELL) bounding boxes
+    vector<BboxMinMax> bounding_boxes;  // (NTRIANGLE) bounding boxes
     Containers_t containers;            // holds all items
 
     // Calculates the key of the container where the point should fall in
@@ -116,16 +146,34 @@ struct GridSearch {
     }
 
     // Allocates new instance
-    ///
-    /// # Input
-    ///
-    /// * `ncell` -- is the number of cells (e.g., triangle/tetrahedron) in the mesh.
-    ///     - All cells are numbered from `0` to `ncell - 1`
-    ///     - The index of the cell in a mesh is also called CellId (`cell_id`)
-    /// * `get_x` -- is a function of the `cell_id` and the local index of the node/point `m`.
-    ///    This function returns the coordinates `x` of the point.
-    static std::unique_ptr<GridSearch> make_new(size_t ncell, function<vector<double> const *(size_t, size_t)> get_x) {
+    //
+    // # Input
+    //
+    // * `coordinates` -- is a list of coordinates such as `[[x0,y0,T0], [x1,y1,T1], [x2,y2,T2], [x3,y3,T3]]`
+    //   where `T[i]` are the values (e.g., temperatures) at that coordinate and will be used for interpolation
+    // * `triangles` -- is a list of connectivity (topology) such as `[[0,2,1], [2,1,0]]`
+    static std::unique_ptr<GridSearch> make_new(vector<vector<double>> const &coordinates,
+                                                vector<vector<size_t>> const &triangles) {
+        // constants
+        size_t npoint = coordinates.size();
+        if (npoint < 3) {
+            throw "number of points must be >= 3";
+        }
+        size_t ncol = coordinates[0].size();
+        if (ncol < 2) {
+            throw "coordinates.ncol must be >= 2";
+        }
+        size_t ntriangle = triangles.size();
+        if (ntriangle < 1) {
+            throw "number of triangles must be >= 1";
+        }
+        size_t nnode = triangles[0].size();
+        if (nnode != 3) {
+            throw "number of triangle nodes (nnode) must be = 3";
+        }
+
         // allocate some variables
+        auto x = vector<double>(NDIM);
         auto xmin = vector<double>(NDIM);
         auto xmax = vector<double>(NDIM);
         auto x_min_max = BboxMinMax(NDIM);
@@ -136,30 +184,29 @@ struct GridSearch {
             bbox_large[i] = numeric_limits<double>::min();
         }
 
-        // find limits, bounding boxes, and largest cell
-        for (size_t cell_id = 0; cell_id < ncell; cell_id++) {
+        // find limits, bounding boxes, and largest triangle
+        for (size_t id = 0; id < ntriangle; id++) {
             for (size_t m = 0; m < NNODE; m++) {
-                auto x = get_x(cell_id, m);
-                if (x->size() != NDIM) {
-                    throw "x.size() must be equal to ndim";
-                }
+                size_t p = triangles[id][m];
+                x[0] = coordinates[p][0];
+                x[1] = coordinates[p][1];
                 for (size_t i = 0; i < NDIM; i++) {
                     // limits
-                    xmin[i] = min(xmin[i], (*x)[i]);
-                    xmax[i] = max(xmax[i], (*x)[i]);
+                    xmin[i] = min(xmin[i], x[i]);
+                    xmax[i] = max(xmax[i], x[i]);
                     // bounding box
                     if (m == 0) {
                         for (size_t i = 0; i < NDIM; i++) {
-                            x_min_max[i][I_MIN] = (*x)[i];
-                            x_min_max[i][I_MAX] = (*x)[i];
+                            x_min_max[i][I_MIN] = x[i];
+                            x_min_max[i][I_MAX] = x[i];
                         }
                     } else {
-                        x_min_max[i][I_MIN] = min(x_min_max[i][I_MIN], (*x)[i]);
-                        x_min_max[i][I_MAX] = max(x_min_max[i][I_MAX], (*x)[i]);
+                        x_min_max[i][I_MIN] = min(x_min_max[i][I_MIN], x[i]);
+                        x_min_max[i][I_MAX] = max(x_min_max[i][I_MAX], x[i]);
                     }
                 }
             }
-            // largest cell
+            // largest triangle
             for (size_t i = 0; i < NDIM; i++) {
                 bbox_large[i] = max(bbox_large[i], x_min_max[i][I_MAX] - x_min_max[i][I_MIN]);
             }
@@ -193,11 +240,10 @@ struct GridSearch {
             xmax[i] = xmin[i] + side_length * ((double)ndiv[i]);
         }
 
-        // insert cells
+        // insert triangles
         Containers_t containers;
-        vector<double> x(NDIM);
-        for (size_t cell_id = 0; cell_id < ncell; cell_id++) {
-            auto x_min_max = bounding_boxes[cell_id];
+        for (size_t id = 0; id < ntriangle; id++) {
+            auto x_min_max = bounding_boxes[id];
             for (size_t r = 0; r < 2; r++) {
                 for (size_t s = 0; s < 2; s++) {
                     x[0] = x_min_max[0][r];
@@ -205,11 +251,11 @@ struct GridSearch {
                     auto key = calc_container_key(side_length, ndiv, xmin, x);
                     auto iter = containers.find(key);
                     if (iter == containers.end()) {
-                        Container_t container = {{cell_id}};
+                        Container_t container = {{id}};
                         containers.insert({key, container});
                     } else {
                         Container_t &container = iter->second;
-                        container.insert({cell_id});
+                        container.insert({id});
                     }
                 }
             }
@@ -227,11 +273,24 @@ struct GridSearch {
             }};
     }
 
-    // Find the cell (e.g., triangle or tetrahedron) where the given coordinate falls in
+    // Find the triangle where the given coordinate falls in
     //
-    // * Returns the CellId or -1 if no cell contains the point
-    // * `is_in_cell` is a function of cell_id and x that tells whether the point si in the cell or not
-    int find_cell(vector<double> &x, function<bool(size_t, vector<double> const *)> is_in_cell) {
+    // # Input
+    //
+    // * `coordinates` -- is a list of coordinates such as `[[x0,y0], [x1,y1], [x2,y2], [x3,y3]]`
+    // * `triangles` -- is a list of connectivity (topology) such as `[[0,2,1], [2,1,0]]`
+    //
+    // # Output
+    //
+    // Returns the index of the triangle in `triangles` or -1 if no triangle contains the point
+    //
+    // # Warning (Exceptions)
+    //
+    // The pair `coordinates` and `triangles` must be the same as the ones used in the `new` function,
+    // otherwise **panics** may occur or, even worse, you may get **incorrect results**.
+    int find_triangle(vector<double> &x,
+                      vector<vector<double>> const &coordinates,
+                      vector<vector<size_t>> const &triangles) {
         // check if the point is out-of-bounds
         for (size_t i = 0; i < NDIM; i++) {
             if (x[i] < this->xmin[i] || x[i] > this->xmax[i]) {
@@ -246,22 +305,110 @@ struct GridSearch {
             return -1;  // there is no container for the key corresponding to x
         }
 
-        // find the cell where the point falls in
+        // find the triangle where the point falls in
+        vector<double> xa(NDIM);
+        vector<double> xb(NDIM);
+        vector<double> xc(NDIM);
         auto container = iter->second;
-        for (const auto &cell_id : container) {
-            auto x_min_max = this->bounding_boxes[cell_id];
+        for (const auto &id : container) {
+            size_t a = triangles[id][0];
+            size_t b = triangles[id][1];
+            size_t c = triangles[id][2];
+            auto x_min_max = this->bounding_boxes[id];
+            bool outside = false;
             for (size_t i = 0; i < NDIM; i++) {
                 if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
-                    continue;  // outside the bounding box
+                    outside = true;  // outside the bounding box
+                    break;
                 }
+                xa[i] = coordinates[a][i];
+                xb[i] = coordinates[b][i];
+                xc[i] = coordinates[c][i];
             }
-            if ((is_in_cell)(cell_id, &x)) {
-                return cell_id;
+            if (outside) {
+                continue;
+            }
+            if (in_triangle(xa, xb, xc, x)) {
+                return id;
             }
         }
 
         // not found
         return -1;
+    }
+
+    // Find the triangle where the given coordinate falls in and interpolate coordinates
+    //
+    // # Input
+    //
+    // * `coordinates` -- is a list of coordinates such as `[[x0,y0], [x1,y1], [x2,y2], [x3,y3]]`
+    // * `triangles` -- is a list of connectivity (topology) such as `[[0,2,1], [2,1,0]]`
+    //
+    // # Output
+    //
+    // Returns the value (e.g., temperature) at the target point (xp) inside the triangle.
+    // Throws an exception if no triangle contains the point.
+    //
+    // # Warning (Exceptions)
+    //
+    // The pair `coordinates` and `triangles` must be the same as the ones used in the `new` function,
+    // otherwise **panics** may occur or, even worse, you may get **incorrect results**.
+    double find_triangle_and_interpolate(vector<double> &x,
+                                         vector<vector<double>> const &coordinates,
+                                         vector<vector<size_t>> const &triangles) {
+        // check if the point is out-of-bounds
+        for (size_t i = 0; i < NDIM; i++) {
+            if (x[i] < this->xmin[i] || x[i] > this->xmax[i]) {
+                throw "given point coordinates are outside the grid";
+            }
+        }
+
+        // check if the temperature is present in the coordinates list
+        if (coordinates[0].size() < 3) {
+            throw "coordinates must contain a third column with the temperature values";
+        }
+
+        // get the container where `x` falls in
+        auto key = calc_container_key(this->side_length, this->ndiv, this->xmin, x);
+        auto iter = this->containers.find(key);
+        if (iter == this->containers.end()) {
+            return -1;  // there is no container for the key corresponding to x
+        }
+
+        // find the triangle where the point falls in
+        vector<double> xa(NDIM);
+        vector<double> xb(NDIM);
+        vector<double> xc(NDIM);
+        vector<double> temp(3);  // 3 nodes
+        auto container = iter->second;
+        for (const auto &id : container) {
+            size_t a = triangles[id][0];
+            size_t b = triangles[id][1];
+            size_t c = triangles[id][2];
+            auto x_min_max = this->bounding_boxes[id];
+            bool outside = false;
+            for (size_t i = 0; i < NDIM; i++) {
+                if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
+                    outside = true;  // outside the bounding box
+                    break;
+                }
+                xa[i] = coordinates[a][i];
+                xb[i] = coordinates[b][i];
+                xc[i] = coordinates[c][i];
+            }
+            if (outside) {
+                continue;
+            }
+            if (in_triangle(xa, xb, xc, x)) {
+                temp[0] = coordinates[a][2];
+                temp[1] = coordinates[b][2];
+                temp[2] = coordinates[c][2];
+                return triangle_interpolation(xa, xb, xc, temp, x);
+            }
+        }
+
+        // not found
+        throw "cannot find triangle where point falls in";
     }
 
     // Print details about the grid (e.g., for debugging)

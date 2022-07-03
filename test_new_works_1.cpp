@@ -9,18 +9,20 @@ using namespace std;
 
 int main() {
     try {
-        // [num_triangle][nnode=3][ndim=2]
-        vector<vector<vector<double>>> tris = {
-            {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}},
-            {{1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}}};
-
-        // lambda function that returns the coordinates of cell's point m
-        auto get_x = [&tris](size_t t, size_t m) {
-            return &tris[t][m];
+        // data
+        vector<vector<double>> coordinates = {
+            {0.0, 0.0},
+            {1.0, 0.0},
+            {1.0, 1.0},
+            {0.0, 1.0},
+        };
+        vector<vector<size_t>> triangles = {
+            {0, 1, 3},
+            {1, 2, 3},
         };
 
         // allocate grid
-        auto grid = GridSearch::make_new(tris.size(), get_x);
+        auto grid = GridSearch::make_new(coordinates, triangles);
 
         // check data
         double max_len = 1.0;

@@ -7,48 +7,38 @@ using namespace std;
 
 int main() {
     try {
-        // [num_triangle][nnode=3][ndim=2]
-        vector<vector<vector<double>>> tris = {
-            {{0.230951, 0.558482}, {0.133721, 0.348832}, {0.540745, 0.331184}},
-            {{0.13928, 0.180603}, {0.133721, 0.348832}, {0.0307942, 0.459123}},
-            {{0.0307942, 0.459123}, {0.230951, 0.558482}, {0.0980015, 0.981755}},
-            {{0.230951, 0.558482}, {0.0307942, 0.459123}, {0.133721, 0.348832}},
-            {{0.0980015, 0.981755}, {0.230951, 0.558482}, {0.578587, 0.760349}},
-            {{0.133721, 0.348832}, {0.13928, 0.180603}, {0.540745, 0.331184}},
-            {{0.540745, 0.331184}, {0.578587, 0.760349}, {0.230951, 0.558482}},
-            {{0.540745, 0.331184}, {0.478554, 0.00869692}, {0.648071, 0.369534}},
-            {{0.578587, 0.760349}, {0.648071, 0.369534}, {0.903726, 0.975904}},
-            {{0.648071, 0.369534}, {0.578587, 0.760349}, {0.540745, 0.331184}},
-            {{0.578587, 0.760349}, {0.903726, 0.975904}, {0.0980015, 0.981755}},
-            {{0.540745, 0.331184}, {0.13928, 0.180603}, {0.478554, 0.00869692}}};
-
-        // lambda function that returns the coordinates of cell's point m
-        auto get_x = [&tris](size_t t, size_t m) {
-            return &tris[t][m];
+        // data
+        vector<vector<double>> coordinates = {
+            {0.0, 0.0, 0.0},  // last column is the temperature
+            {0.5, 0.85, 0.986154146165801},
+            {1.0, 0.0, 1.0},
+            {1.0, 1.7, 1.972308292331602},
+            {1.5, 0.85, 1.724093964956667},
+            {2.0, 0.0, 2.0},
+            {2.0, 1.7, 2.6248809496813372},
+            {2.5, 0.85, 2.640549185302179},
+            {3.0, 1.7, 3.448187929913334},
+        };
+        vector<vector<size_t>> triangles = {
+            {0, 2, 1},
+            {2, 5, 4},
+            {1, 2, 4},
+            {4, 5, 7},
+            {1, 4, 3},
+            {4, 7, 6},
+            {3, 4, 6},
+            {6, 7, 8},
         };
 
         // allocate grid
-        auto grid = GridSearch::make_new(tris.size(), get_x);
+        auto grid = GridSearch::make_new(coordinates, triangles);
 
-        // print details
-        grid->print_details();
-
-        // lambda function that tells whether the point is in the cell or not
-        auto is_in_cell = [&tris](size_t t, vector<double> const *x) {
-            return in_triangle(tris[t][0], tris[t][1], tris[t][2], (*x));
-        };
-
-        // find triangle given coords
+        // interpolate the temperature @ x
         vector<double> x = {0.5, 0.5};
-        auto id = grid->find_cell(x, is_in_cell);
+        auto temp = grid->find_triangle_and_interpolate(x, coordinates, triangles);
         cout << "\nx = {" << x[0] << ", " << x[1] << "}" << endl;
-        cout << "found triangle with id = " << id << endl;
-
-        // find with another point
-        x = {0.4, 0.2};
-        id = grid->find_cell(x, is_in_cell);
-        cout << "\nx = {" << x[0] << ", " << x[1] << "}" << endl;
-        cout << "found triangle with id = " << id << endl;
+        cout << "temperature = " << temp << endl;
+        cout << endl;
 
     } catch (char const *msg) {
         cout << "ERROR: " << msg << endl;
