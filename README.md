@@ -73,9 +73,9 @@ where `in_triangle` implements the algorithm to detect if a point is inside the 
 
 Given the following mesh:
 
-![example_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_triangles.svg)
+![example_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_triangles.png)
 
-Find points using [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
+Interpolate data using [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
 
 Output:
 

@@ -40,6 +40,7 @@ set(BINS
     example_triangles
     test_new_works_1
     test_find_works_1
+    test_interp_works_1
 )
 
 foreach(var ${BINS})
