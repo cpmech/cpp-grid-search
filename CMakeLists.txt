@@ -34,6 +34,14 @@ endif(A_MAKE_OPTIMIZED)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# library ################################################################################
+
+add_library(trilib SHARED
+    lib/interface_triangle.c
+    lib/triangle.c
+    lib/tricall_report.c
+)
+
 # main ###################################################################################
 
 set(BINS
