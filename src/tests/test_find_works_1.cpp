@@ -1,10 +1,9 @@
 #include <cassert>
-#include <cmath>
 #include <iostream>
 #include <vector>
 
-#include "grid_search.h"
-#include "testing.h"
+#include "../gsearch/grid_search.h"
+#include "check.h"
 
 using namespace std;
 
@@ -36,29 +35,25 @@ int main() {
         // allocate grid
         auto grid = GridSearch::make_new(coordinates, triangles);
 
-        // interpolate @ points
-        vector<double> x(2);
-        for (const auto &x_y_tt : coordinates) {
-            x[0] = x_y_tt[0];
-            x[1] = x_y_tt[1];
-            double tt = grid->find_triangle_and_interpolate(x, coordinates, triangles);
-            double error = fabs(tt - x_y_tt[2]);
-            assert(error < 1e-17);
+        // find triangle given coords
+        vector<double> x = {0.4, 0.2};
+        assert(grid->find_triangle(x, coordinates, triangles) == 0);
+        x = {1.5, 0.5};
+        assert(grid->find_triangle(x, coordinates, triangles) == 1);
+        x = {2.0, 1.4};
+        assert(grid->find_triangle(x, coordinates, triangles) == 5);
+        x = {0.1, 0.5};
+        assert(grid->find_triangle(x, coordinates, triangles) == -1);
+        x = {2.5, 0.2};
+        assert(grid->find_triangle(x, coordinates, triangles) == -1);
+        x = {10.0, 1.0};
+        auto did_throw = false;
+        try {
+            grid->find_triangle(x, coordinates, triangles);
+        } catch (const char *msg) {
+            did_throw = true;
         }
-
-        // interpolate @ (1.5,1.0)
-        x = {1.5, 1.0};
-        double tt = grid->find_triangle_and_interpolate(x, coordinates, triangles);
-        double correct = sqrt(x[0] * x[0] + x[1] * x[1]);
-        double error = fabs(tt - correct);
-        cout << "T = " << tt << " (" << correct << ") error = " << error << endl;
-        assert(error < 0.025);
-
-        // handle NaN
-        x = {0.5, 1.5};
-        tt = grid->find_triangle_and_interpolate(x, coordinates, triangles);
-        cout << "T = " << tt << endl;
-        assert(isnan(tt));
+        assert(did_throw);
 
         cout << "OK" << endl;
 

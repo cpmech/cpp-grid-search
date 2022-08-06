@@ -39,22 +39,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(TRILIB_NAME "trilib")
 
 add_library(${TRILIB_NAME} SHARED
-    lib/interface_triangle.c
-    lib/triangle.c
-    lib/tricall_report.c
+    src/triangle/interface_triangle.c
+    src/triangle/triangle.c
+    src/triangle/tricall_report.c
 )
 
 # main ###################################################################################
 
-set(BINS
-    example_delaunay
-    example_triangles
-    test_new_works_1
-    test_find_works_1
-    test_interp_works_1
-)
+# subdirectories #############################################################################
 
-foreach(var ${BINS})
-    add_executable(${var} "${var}.cpp")
-    target_link_libraries(${var} PUBLIC ${TRILIB_NAME})
-endforeach(var)
+add_subdirectory(src)
+#add_subdirectory(examples)

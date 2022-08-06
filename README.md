@@ -13,7 +13,7 @@ key = ratio[0] + ratio[1] * ndiv[0]
 
 Below is an illustration of a grid with two triangles:
 
-![example_grid_two_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_grid_two_triangles.svg)
+![example_grid_two_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/example_grid_two_triangles.svg)
 
 Only the containers touched by the bounding box of the triangle are saved. Thus, we use a `map` from container key to a "set" of triangles belonging to this container. Therefore, all data is stored in the following data structure;
 

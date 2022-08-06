@@ -2,8 +2,8 @@
 #include <iostream>
 #include <vector>
 
-#include "grid_search.h"
-#include "testing.h"
+#include "../gsearch/grid_search.h"
+#include "check.h"
 
 using namespace std;
 
