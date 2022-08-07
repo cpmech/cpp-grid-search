@@ -9,7 +9,7 @@
 
 using namespace std;
 
-TEST_CASE("GridSearch") {
+TEST_CASE("Find") {
     // data
     vector<vector<double>> coordinates = {
         {0.0, 0.0, 0.0},  // last column is the temperature
@@ -33,28 +33,20 @@ TEST_CASE("GridSearch") {
         {6, 7, 8},
     };
 
-    SUBCASE("make_new works") {
-        // allocate grid
-        auto grid = GridSearch::make_new(coordinates, triangles);
-        CHECK(grid->bounding_boxes.size() == triangles.size());
-    }
+    // allocate grid
+    auto grid = GridSearch::make_new(coordinates, triangles);
 
-    SUBCASE("find_triangle works") {
-        // allocate grid
-        auto grid = GridSearch::make_new(coordinates, triangles);
-
-        // find triangle given coords
-        vector<double> x = {0.4, 0.2};
-        CHECK(grid->find_triangle(x, coordinates, triangles) == 0);
-        x = {1.5, 0.5};
-        CHECK(grid->find_triangle(x, coordinates, triangles) == 1);
-        x = {2.0, 1.4};
-        CHECK(grid->find_triangle(x, coordinates, triangles) == 5);
-        x = {0.1, 0.5};
-        CHECK(grid->find_triangle(x, coordinates, triangles) == -1);
-        x = {2.5, 0.2};
-        CHECK(grid->find_triangle(x, coordinates, triangles) == -1);
-        x = {10.0, 1.0};
-        CHECK_THROWS_WITH(grid->find_triangle(x, coordinates, triangles), "given point coordinates are outside the grid");
-    }
+    // find triangle given coords
+    vector<double> x = {0.4, 0.2};
+    CHECK(grid->find_triangle(x, coordinates, triangles) == 0);
+    x = {1.5, 0.5};
+    CHECK(grid->find_triangle(x, coordinates, triangles) == 1);
+    x = {2.0, 1.4};
+    CHECK(grid->find_triangle(x, coordinates, triangles) == 5);
+    x = {0.1, 0.5};
+    CHECK(grid->find_triangle(x, coordinates, triangles) == -1);
+    x = {2.5, 0.2};
+    CHECK(grid->find_triangle(x, coordinates, triangles) == -1);
+    x = {10.0, 1.0};
+    CHECK_THROWS_WITH(grid->find_triangle(x, coordinates, triangles), "given point coordinates are outside the grid");
 }
