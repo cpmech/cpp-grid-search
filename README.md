@@ -13,7 +13,7 @@ key = ratio[0] + ratio[1] * ndiv[0]
 
 Below is an illustration of a grid with two triangles:
 
-![example_grid_two_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_grid_two_triangles.svg)
+![example_grid_two_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/example_grid_two_triangles.svg)
 
 Only the containers touched by the bounding box of the triangle are saved. Thus, we use a `map` from container key to a "set" of triangles belonging to this container. Therefore, all data is stored in the following data structure;
 
@@ -57,9 +57,9 @@ where we must pass the same `coordinates` and `triangles` used in `new`.
 
 Given the following mesh:
 
-![example_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/example_triangles.png)
+![example_triangles](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/example_triangles.png)
 
-Interpolate data using [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp):
+Interpolate data using [example_triangles.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_triangles.cpp):
 
 Output:
 
@@ -67,6 +67,23 @@ Output:
 x = {0.5, 0.5}
 temperature = 0.785973
 ```
+
+## Delaunay triangulation
+
+Delaunay triangulation is performed using the fantastic [Triangle](https://www.cs.cmu.edu/~quake/triangle.html).
+
+Given a "cloud" of points, call `make_new`:
+
+```c++
+// generate Delaunay triangulation
+auto del = Delaunay::make_new(cloud, false);
+```
+
+Full example [example_delaunay.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_delaunay.cpp)
+
+The code should generate a mesh like the one below:
+
+![example_delaunay](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/doc_triangle_delaunay_1.svg)
 
 ## Reference
 

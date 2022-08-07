@@ -1,5 +1,28 @@
 {
   "cSpell.words": [
+    "edgelist",
+    "edgemarkerlist",
+    "holelist",
+    "neighborlist",
+    "normlist",
+    "numberofcorners",
+    "numberofedges",
+    "numberofpointattributes",
+    "numberofpoints",
+    "numberofregions",
+    "numberofsegments",
+    "numberoftriangleattributes",
+    "numberoftriangles",
+    "pointattributelist",
+    "pointlist",
+    "pointmarkerlist",
+    "regionlist",
+    "segmentlist",
+    "segmentmarkerlist",
+    "SUBCASE",
+    "trianglearealist",
+    "triangleattributelist",
+    "trianglelist",
     "xcorner"
   ]
 }

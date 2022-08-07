@@ -34,16 +34,17 @@ endif(A_MAKE_OPTIMIZED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# main ###################################################################################
+# library ################################################################################
 
-set(BINS
-    example_triangles
-    test_new_works_1
-    test_find_works_1
-    test_interp_works_1
+set(TRILIB_NAME "trilib")
+
+add_library(${TRILIB_NAME} SHARED
+    src/triangle/interface_triangle.c
+    src/triangle/triangle.c
+    src/triangle/tricall_report.c
 )
 
-foreach(var ${BINS})
-    add_executable(${var} "${var}.cpp")
-    target_link_libraries(${var} ${LIB_NAME})
-endforeach(var)
+# subdirectories #############################################################################
+
+add_subdirectory(src)
+add_subdirectory(examples)
