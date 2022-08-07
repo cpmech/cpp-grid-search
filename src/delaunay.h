@@ -19,7 +19,7 @@ struct Delaunay {
 
     // destructor to make sure we clean Triangle data
     ~Delaunay() {
-        std::cout << "Task::Destructor" << std::endl;
+        drop_triangle(this->ext_triangle);
     }
 
     static std::unique_ptr<Delaunay> make_new(vector<vector<double>> const& coordinates) {
@@ -35,6 +35,9 @@ struct Delaunay {
 
         // allocate triangle data
         auto ext_triangle = new_triangle(npoint, 0, 0, 0);
+        if (ext_triangle == NULL) {
+            throw "cannot allocate triangle data";
+        }
 
         // allocate Delaunay structure
         return std::unique_ptr<Delaunay>{
