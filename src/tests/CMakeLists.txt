@@ -1,4 +1,5 @@
 set(TESTS
+    test_delaunay_1
     test_new_works_1
     test_find_works_1
     test_interp_works_1
