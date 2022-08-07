@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "delaunay.h"
+#include "../src/delaunay.h"
 
 using namespace std;
 

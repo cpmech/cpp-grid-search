@@ -8,7 +8,9 @@
 #include <set>
 #include <vector>
 
-#include "lib/interface_triangle.h"
+extern "C" {
+#include "triangle/interface_triangle.h"
+}
 
 using namespace std;
 

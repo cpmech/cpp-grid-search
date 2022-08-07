@@ -44,8 +44,6 @@ add_library(${TRILIB_NAME} SHARED
     src/triangle/tricall_report.c
 )
 
-# main ###################################################################################
-
 # subdirectories #############################################################################
 
 add_subdirectory(src)
