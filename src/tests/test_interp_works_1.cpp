@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../gsearch/grid_search.h"
+#include "../grid_search.h"
 #include "check.h"
 #include "doctest.h"
 

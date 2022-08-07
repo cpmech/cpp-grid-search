@@ -49,4 +49,4 @@ add_library(${TRILIB_NAME} SHARED
 # subdirectories #############################################################################
 
 add_subdirectory(src)
-#add_subdirectory(examples)
+add_subdirectory(examples)

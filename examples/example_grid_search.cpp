@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "grid_search.h"
+#include "../src/grid_search.h"
 
 using namespace std;
 

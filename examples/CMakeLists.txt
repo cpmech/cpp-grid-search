@@ -1,6 +1,5 @@
 set(EXAMPLES
-    example_delaunay
-    example_triangles
+    example_grid_search
 )
 
 foreach(var ${EXAMPLES})
