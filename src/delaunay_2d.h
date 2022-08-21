@@ -1,11 +1,5 @@
 #pragma once
 
-#include <cmath>
-#include <iostream>
-#include <limits>
-#include <map>
-#include <memory>
-#include <set>
 #include <vector>
 
 extern "C" {

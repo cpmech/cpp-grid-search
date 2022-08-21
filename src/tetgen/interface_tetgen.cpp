@@ -1,3 +1,5 @@
+#include "interface_tetgen.h"
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,10 +8,6 @@
 
 #include "../triangle/constants.h"
 #include "tetgen.h"
-
-extern "C" {
-#include "interface_tetgen.h"
-}
 
 void drop_tetgen(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {

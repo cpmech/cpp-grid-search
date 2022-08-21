@@ -1,5 +1,6 @@
 set(TESTS
     test_delaunay_2d_1
+    test_delaunay_3d_1
     test_new_works_1
     test_find_works_1
     test_large_tris_1
@@ -9,5 +10,5 @@ set(TESTS
 foreach(var ${TESTS})
     add_executable(${var} "${var}.cpp")
     add_test(NAME ${var} COMMAND ${var})
-    target_link_libraries(${var} PUBLIC ${TRILIB_NAME})
+    target_link_libraries(${var} PUBLIC ${TRILIB_NAME} ${TETLIB_NAME})
 endforeach(var)
