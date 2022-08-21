@@ -91,6 +91,24 @@ const double GS_TOLERANCE = 1e-4;
 // GridSearch border tolerance to handle imprecision near the borders
 const double GS_BORDER_TOL = 1e-2;
 
+/// Defines a bounding-box ratio coefficient in [0,1] to mark cells as "large" cells compared the others
+///
+/// Example: If a cell has a max(bounding box length) / largest >= 0.75,
+///          Then this cell is put into the large_cells list
+///
+/// This constant enables the strategy of putting some cells in a selected list of large cells.
+/// The other constant [GS_LARGE_CELLS_MAX_RATIO] also influences the algorithm by enabling or disabling this strategy.
+const double GS_LARGE_CELLS_CUTOFF = 0.75;
+
+/// Controls the count percentage in [0,1] of large cells allowed in the selected array of large cells.
+///
+/// Example: If 20% of cells are too large, put them in a separated list of large cells;
+///          otherwise, the mesh is homogeneous enough so put all cells in the containers.
+///
+/// If the actual ratio is greater than this constant (i.e., many cells are large such as in a homogeneous mesh),
+/// the "strategy" of selecting large cells is abandoned. The other constant [GS_LARGE_CELLS_CUTOFF] also influences the algorithm.
+const double GS_LARGE_CELLS_MAX_COUNT_PCT = 0.2;
+
 // Specifies the key of containers (or bins in the grid)
 typedef size_t ContainerKey;
 
@@ -127,6 +145,7 @@ struct GridSearch {
     double side_length;                 // side length of a container
     vector<BboxMinMax> bounding_boxes;  // (NTRIANGLE) bounding boxes
     Containers_t containers;            // holds all items
+    Container_t large_triangles;        // holds the ids of large triangles
 
     // Calculates the key of the container where the point should fall in
     static inline ContainerKey calc_container_key(
@@ -177,11 +196,13 @@ struct GridSearch {
         auto xmin = vector<double>(NDIM);
         auto xmax = vector<double>(NDIM);
         auto x_min_max = BboxMinMax(NDIM);
-        auto bbox_large = vector<double>(NDIM);
+        auto bbox_largest = vector<double>(NDIM);
         vector<BboxMinMax> bounding_boxes;
         for (size_t i = 0; i < NDIM; i++) {
+            xmin[i] = numeric_limits<double>::max();
+            xmax[i] = numeric_limits<double>::min();
             x_min_max[i] = vector<double>(N_MIN_MAX);
-            bbox_large[i] = numeric_limits<double>::min();
+            bbox_largest[i] = numeric_limits<double>::min();
         }
 
         // find limits, bounding boxes, and largest triangle
@@ -208,17 +229,45 @@ struct GridSearch {
             }
             // largest triangle
             for (size_t i = 0; i < NDIM; i++) {
-                bbox_large[i] = max(bbox_large[i], x_min_max[i][I_MAX] - x_min_max[i][I_MIN]);
+                bbox_largest[i] = max(bbox_largest[i], x_min_max[i][I_MAX] - x_min_max[i][I_MIN]);
             }
             // add to bounding box maps
             bounding_boxes.push_back(x_min_max);
         }
 
-        // make the side_length equal to the largest bounding box dimension
-        double side_length = bbox_large[0];
+        // compute largest length of largest bounding box
+        double bbox_largest_length = bbox_largest[0];
         for (size_t i = 1; i < NDIM; i++) {
-            side_length = max(side_length, bbox_large[i]);
+            bbox_largest_length = max(bbox_largest_length, bbox_largest[i]);
         }
+
+        // handle large triangles
+        double bbox_large_length = 0.0;  // largest length among the not very large triangles
+        Container_t large_triangles;
+        for (size_t id = 0; id < ntriangle; id++) {
+            auto x_min_max = bounding_boxes[id];
+            double tri_largest_length = x_min_max[0][I_MAX] - x_min_max[0][I_MIN];
+            for (size_t i = 0; i < NDIM; i++) {
+                tri_largest_length = max(tri_largest_length, x_min_max[i][I_MAX] - x_min_max[i][I_MIN]);
+            }
+            if (tri_largest_length >= GS_LARGE_CELLS_CUTOFF * bbox_largest_length) {
+                large_triangles.insert(id);
+            } else {
+                for (size_t i = 0; i < NDIM; i++) {
+                    bbox_large_length = max(bbox_large_length, x_min_max[i][I_MAX] - x_min_max[i][I_MIN]);
+                }
+            }
+        }
+
+        // make the side_length equal to the largest bounding box dimension
+        double pct = ((double)(large_triangles.size())) / ((double)(ntriangle));
+        double side_length;
+        if (pct <= GS_LARGE_CELLS_MAX_COUNT_PCT) {
+            side_length = bbox_large_length;  // use the largest length among the not very large triangles
+        } else {
+            large_triangles.clear();            // abandon the large triangles strategy
+            side_length = bbox_largest_length;  // use the largest length among them all
+        };
 
         // expand side_length by two times the tolerance (left and right)
         side_length += 2.0 * GS_TOLERANCE;
@@ -243,6 +292,10 @@ struct GridSearch {
         // insert triangles
         Containers_t containers;
         for (size_t id = 0; id < ntriangle; id++) {
+            auto iter = large_triangles.find(id);
+            if (iter != large_triangles.end()) {
+                continue;  // skip large triangles
+            }
             auto x_min_max = bounding_boxes[id];
             for (size_t r = 0; r < 2; r++) {
                 for (size_t s = 0; s < 2; s++) {
@@ -270,6 +323,7 @@ struct GridSearch {
                 side_length,
                 bounding_boxes,
                 containers,
+                large_triangles,
             }};
     }
 
@@ -298,6 +352,35 @@ struct GridSearch {
             }
         }
 
+        // auxiliary
+        vector<double> xa(NDIM);
+        vector<double> xb(NDIM);
+        vector<double> xc(NDIM);
+
+        // check if the point is in a large triangle
+        for (const auto &id : this->large_triangles) {
+            size_t a = triangles[id][0];
+            size_t b = triangles[id][1];
+            size_t c = triangles[id][2];
+            auto x_min_max = this->bounding_boxes[id];
+            bool outside_bbox = false;
+            for (size_t i = 0; i < NDIM; i++) {
+                if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
+                    outside_bbox = true;  // outside the bounding box
+                    break;
+                }
+                xa[i] = coordinates[a][i];
+                xb[i] = coordinates[b][i];
+                xc[i] = coordinates[c][i];
+            }
+            if (outside_bbox) {
+                continue;  // don't even bother calling is_point_inside_triangle
+            }
+            if (in_triangle(xa, xb, xc, x)) {
+                return id;
+            }
+        }
+
         // get the container where `x` falls in
         auto key = calc_container_key(this->side_length, this->ndiv, this->xmin, x);
         auto iter = this->containers.find(key);
@@ -306,27 +389,24 @@ struct GridSearch {
         }
 
         // find the triangle where the point falls in
-        vector<double> xa(NDIM);
-        vector<double> xb(NDIM);
-        vector<double> xc(NDIM);
         auto container = iter->second;
         for (const auto &id : container) {
             size_t a = triangles[id][0];
             size_t b = triangles[id][1];
             size_t c = triangles[id][2];
             auto x_min_max = this->bounding_boxes[id];
-            bool outside = false;
+            bool outside_bbox = false;
             for (size_t i = 0; i < NDIM; i++) {
                 if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
-                    outside = true;  // outside the bounding box
+                    outside_bbox = true;  // outside the bounding box
                     break;
                 }
                 xa[i] = coordinates[a][i];
                 xb[i] = coordinates[b][i];
                 xc[i] = coordinates[c][i];
             }
-            if (outside) {
-                continue;
+            if (outside_bbox) {
+                continue;  // don't even bother calling is_point_inside_triangle
             }
             if (in_triangle(xa, xb, xc, x)) {
                 return id;
@@ -368,6 +448,39 @@ struct GridSearch {
             throw "coordinates must contain a third column with the temperature values";
         }
 
+        // auxiliary
+        vector<double> xa(NDIM);
+        vector<double> xb(NDIM);
+        vector<double> xc(NDIM);
+        vector<double> temp(3);  // 3 nodes
+
+        // check if the point is in a large triangle
+        for (const auto &id : this->large_triangles) {
+            size_t a = triangles[id][0];
+            size_t b = triangles[id][1];
+            size_t c = triangles[id][2];
+            auto x_min_max = this->bounding_boxes[id];
+            bool outside_bbox = false;
+            for (size_t i = 0; i < NDIM; i++) {
+                if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
+                    outside_bbox = true;  // outside the bounding box
+                    break;
+                }
+                xa[i] = coordinates[a][i];
+                xb[i] = coordinates[b][i];
+                xc[i] = coordinates[c][i];
+            }
+            if (outside_bbox) {
+                continue;
+            }
+            if (in_triangle(xa, xb, xc, x)) {
+                temp[0] = coordinates[a][2];
+                temp[1] = coordinates[b][2];
+                temp[2] = coordinates[c][2];
+                return triangle_interpolation(xa, xb, xc, temp, x);
+            }
+        }
+
         // get the container where `x` falls in
         auto key = calc_container_key(this->side_length, this->ndiv, this->xmin, x);
         auto iter = this->containers.find(key);
@@ -376,27 +489,23 @@ struct GridSearch {
         }
 
         // find the triangle where the point falls in
-        vector<double> xa(NDIM);
-        vector<double> xb(NDIM);
-        vector<double> xc(NDIM);
-        vector<double> temp(3);  // 3 nodes
         auto container = iter->second;
         for (const auto &id : container) {
             size_t a = triangles[id][0];
             size_t b = triangles[id][1];
             size_t c = triangles[id][2];
             auto x_min_max = this->bounding_boxes[id];
-            bool outside = false;
+            bool outside_bbox = false;
             for (size_t i = 0; i < NDIM; i++) {
                 if (x[i] < x_min_max[i][I_MIN] || x[i] > x_min_max[i][I_MAX]) {
-                    outside = true;  // outside the bounding box
+                    outside_bbox = true;  // outside the bounding box
                     break;
                 }
                 xa[i] = coordinates[a][i];
                 xb[i] = coordinates[b][i];
                 xc[i] = coordinates[c][i];
             }
-            if (outside) {
+            if (outside_bbox) {
                 continue;
             }
             if (in_triangle(xa, xb, xc, x)) {
@@ -428,5 +537,15 @@ struct GridSearch {
             }
             cout << "]" << endl;
         }
+        cout << "large_triangles = [";
+        bool first = true;
+        for (const auto &id : this->large_triangles) {
+            if (!first) {
+                cout << ", ";
+            }
+            cout << id;
+            first = false;
+        }
+        cout << "]" << endl;
     }
 };
