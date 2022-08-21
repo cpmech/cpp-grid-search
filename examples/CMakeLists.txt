@@ -1,5 +1,5 @@
 set(EXAMPLES
-    example_delaunay
+    example_delaunay_2d
     example_grid_search
 )
 

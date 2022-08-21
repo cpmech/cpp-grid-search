@@ -1,5 +1,5 @@
 set(TESTS
-    test_delaunay_1
+    test_delaunay_2d_1
     test_new_works_1
     test_find_works_1
     test_large_tris_1
