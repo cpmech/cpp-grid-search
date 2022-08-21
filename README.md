@@ -82,7 +82,7 @@ temperature = 0.785973
 
 ## Delaunay triangulation
 
-In 2D, Delaunay triangulation is performed using the fantastic [Triangle](https://www.cs.cmu.edu/~quake/triangle.html). In 3D, the Delaunay tetrahedralization is performed with TetGen (and old version).
+In 2D, Delaunay triangulation is performed using the fantastic [Triangle](https://www.cs.cmu.edu/~quake/triangle.html). In 3D, the Delaunay tetrahedralization is performed with an old version of Tetgen: [Tetgen (1.4)](http://tetgen.org/).
 
 Given a "cloud" of points:
 
