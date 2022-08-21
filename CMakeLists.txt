@@ -36,9 +36,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 # library ################################################################################
 
-set(TRILIB_NAME "trilib")
+set(TRILIB_NAME "tritetlib")
 
-add_library(${TRILIB_NAME} SHARED
+add_library(${TRILIB_NAME} STATIC
+    src/tetgen/predicates.cxx
+    src/tetgen/interface_tetgen.cpp
+    src/tetgen/tetgen.cxx
     src/triangle/interface_triangle.c
     src/triangle/triangle.c
     src/triangle/tricall_report.c
