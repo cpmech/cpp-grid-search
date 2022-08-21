@@ -94,7 +94,7 @@ auto tetrahedra = delaunay_3d(cloud_3d, false);
 
 Full example [example_delaunay_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_delaunay_2d.cpp)
 
-Full example [example_delaunay_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_delaunay_3d.cpp)
+Full example [example_delaunay_3d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_delaunay_3d.cpp)
 
 The code should generate a mesh like the one below:
 
