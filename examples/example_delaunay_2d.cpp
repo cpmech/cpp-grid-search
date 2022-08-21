@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../src/delaunay.h"
+#include "../src/delaunay_2d.h"
 
 using namespace std;
 
@@ -22,20 +22,13 @@ int main() {
         };
 
         // generate Delaunay triangulation
-        auto del = Delaunay::make_new(cloud, false);
+        auto triangles = delaunay_2d(cloud, false);
 
-        // print the point coordinates
-        auto npoint = del->coordinates.size();
-        cout << "npoint = " << npoint << endl;
-        for (size_t p = 0; p < npoint; p++) {
-            cout << "x, y, T = " << del->coordinates[p][0] << ", " << del->coordinates[p][1] << ", " << del->coordinates[p][2] << endl;
-        }
-
-        // print the triangle connectivities
-        auto ntriangle = del->triangles.size();
+        // print the triangles list
+        auto ntriangle = triangles.size();
         cout << "ntriangle = " << ntriangle << endl;
         for (size_t t = 0; t < ntriangle; t++) {
-            cout << "v0, v1, v2 = " << del->triangles[t][0] << ", " << del->triangles[t][1] << ", " << del->triangles[t][2] << endl;
+            cout << "v0, v1, v2 = " << triangles[t][0] << ", " << triangles[t][1] << ", " << triangles[t][2] << endl;
         }
 
     } catch (char const *msg) {

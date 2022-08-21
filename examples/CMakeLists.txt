@@ -1,9 +1,10 @@
 set(EXAMPLES
-    example_delaunay
+    example_delaunay_2d
+    example_delaunay_3d
     example_grid_search
 )
 
 foreach(var ${EXAMPLES})
     add_executable(${var} "${var}.cpp")
-    target_link_libraries(${var} PUBLIC ${TRILIB_NAME})
+    target_link_libraries(${var} PUBLIC ${TRILIB_NAME} ${TETLIB_NAME})
 endforeach(var)
