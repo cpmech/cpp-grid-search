@@ -44,27 +44,6 @@ The figures below show before and after the update. The darker yellow triangles 
 
 ![after](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/test_grid_search_tri_find_works.svg)
 
-## Usage
-
-You only need to copy-n-paste the file `grid_search.h` into your project and use it as [shown in the example](https://github.com/cpmech/cpp-grid-search/blob/main/example_triangles.cpp).
-
-First, we allocate the grid:
-
-```c++
-auto grid = GridSearch::make_new(coordinates, triangles);
-```
-
-where `coordinates` is a table with the x-y-temperature data; i.e., the third column contains the values to be interpolated. 
-
-Second, we can interpolate values as follows:
-
-```c++
-vector<double> x = {0.5, 0.5};
-auto temperature = grid->find_triangle_and_interpolate(x, coordinates, triangles);
-```
-
-where we must pass the same `coordinates` and `triangles` used in `new`.
-
 ## Examples
 
 * Find cells in 2D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_2d.cpp):
