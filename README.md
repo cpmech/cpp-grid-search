@@ -65,20 +65,10 @@ auto temperature = grid->find_triangle_and_interpolate(x, coordinates, triangles
 
 where we must pass the same `coordinates` and `triangles` used in `new`.
 
-## Full Example
+## Examples
 
-Given the following mesh:
-
-![example_grid_search](https://github.com/cpmech/cpp-grid-search/raw/main/data/figures/example_triangles.png)
-
-Interpolate data using [example_grid_search.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search.cpp):
-
-Output:
-
-```text
-x = {0.5, 0.5}
-temperature = 0.785973
-```
+* Find cells in 2D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_2d.cpp):
+* Find cells in 3D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_3d.cpp):
 
 ## Delaunay triangulation
 
