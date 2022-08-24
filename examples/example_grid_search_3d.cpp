@@ -36,7 +36,7 @@ int main() {
 
         // interpolate the temperature @ {0,0,0}
         auto temp = grid->interp(id, zeta);
-        cout << "\nx = {" << x[0] << ", " << x[1] << "}" << endl;
+        cout << "\nx = {" << x[0] << ", " << x[1] << ", " << x[2] << "}" << endl;
         cout << "temperature = " << temp << " (should print 10)" << endl;
         cout << endl;
 
