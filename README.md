@@ -46,8 +46,8 @@ The figures below show before and after the update. The darker yellow triangles 
 
 ## Examples
 
-* Find cells in 2D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_2d.cpp):
-* Find cells in 3D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_3d.cpp):
+* Find cells in 2D: [example_grid_search_2d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_2d.cpp)
+* Find cells in 3D: [example_grid_search_3d.cpp](https://github.com/cpmech/cpp-grid-search/blob/main/examples/example_grid_search_3d.cpp)
 
 ## Delaunay triangulation
 
