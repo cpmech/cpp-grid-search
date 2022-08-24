@@ -62,12 +62,12 @@ TEST_CASE("GridSearch 2D - 1") {
     CHECK(bbox_0[1][0] == points[6][1]);
     CHECK(bbox_0[1][1] == points[4][1]);
 
-    // find triangle given coords
+    // output data
     size_t status;
     auto zeta = vector<double>(3);
-    vector<double> x = {0.4, 0.2};
 
-    x = {0.4, 0.2};
+    // find cell given coords
+    vector<double> x = {0.4, 0.2};
     auto id = grid->find(status, zeta, x);
     CHECK(status == SUCCESS);
     CHECK(id == 11);
