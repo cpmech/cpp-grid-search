@@ -9,7 +9,7 @@
 
 using namespace std;
 
-TEST_CASE("Find") {
+TEST_CASE("GridSearch 2D - 1") {
     // data
     vector<vector<double>> points = {
         {0.0307942, 0.459123, 1.0},   // 0 last column is the temperature
