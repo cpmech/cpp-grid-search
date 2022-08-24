@@ -1,10 +1,10 @@
 set(TESTS
     test_delaunay_2d_1
     test_delaunay_3d_1
-    test_new_works_1
-    test_find_works_1
-    test_large_tris_1
-    test_interp_works_1
+    test_grid_search_2d_1
+    test_grid_search_2d_2
+    test_grid_search_3d_1
+    test_tritet_coords
 )
 
 foreach(var ${TESTS})

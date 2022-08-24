@@ -9,7 +9,7 @@
 
 using namespace std;
 
-TEST_CASE("Delaunay") {
+TEST_CASE("Delaunay 2D - 1") {
     // "cloud" of points
     vector<vector<double>> cloud = {
         {0.0, 0.0},
