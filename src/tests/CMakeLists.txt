@@ -3,6 +3,7 @@ set(TESTS
     test_delaunay_3d_1
     test_grid_search_2d_1
     test_grid_search_2d_2
+    test_grid_search_3d_1
     test_tritet_coords
 )
 

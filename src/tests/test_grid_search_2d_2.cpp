@@ -21,12 +21,13 @@ TEST_CASE("GridSearch 2D - 2") {
     };
 
     // allocate grid
-    auto grid = GridSearch::make_new(2, points, cells);
+    size_t ndim = 2;
+    auto grid = GridSearch::make_new(ndim, points, cells);
     grid->print_details();
 
     // output data
     size_t status;
-    auto zeta = vector<double>(3);
+    auto zeta = vector<double>(ndim + 1);
 
     // find cell given coords
     vector<double> x = {0.0, 0.0};
