@@ -5,6 +5,7 @@ set(TESTS
     test_find_works_1
     test_large_tris_1
     test_interp_works_1
+    test_tritet_coords
 )
 
 foreach(var ${TESTS})
