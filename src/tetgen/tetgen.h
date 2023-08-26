@@ -89,39 +89,13 @@
 #include <time.h>
 #include <assert.h> 
 
-// The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
-//   respectively. They are guaranteed to be the same width as a pointer.
-//   They are defined in <stdint.h> by the C99 Standard.
-//   However, Microsoft Visual C++ doesn't ship with this header file yet. We
-//   need to define them. (Thanks to Steven G. Johnson from MIT for the 
-//   following piece of code.) 
-
-// Define the _MSC_VER symbol if you are using Microsoft Visual C++.
-
-// #define _MSC_VER
-
-// Define the _WIN64 symbol if you are running TetGen on Win64.
-
-// #define _WIN64
-
-/*
-#ifdef _MSC_VER // Microsoft Visual C++
-#  ifdef _WIN64
-     typedef __int64 intptr_t;
-     typedef unsigned __int64 uintptr_t;
-#  else // not _WIN64
-     typedef int intptr_t;
-     typedef unsigned int uintptr_t;
-#  endif
-#else // not Visual C++
-#  include <stdint.h>
+// dorival
+#ifdef _MSC_VER
+#define ULONG ptrdiff_t
+#else
+#include <stdint.h>
+#define ULONG unsigned long
 #endif
-*/
-
-//#include <stddef.h>
-//typedef int intptr_t;
-//typedef unsigned int uintptr_t;
-
 
 // To compile TetGen as a library instead of an executable program, define
 //   the TETLIBRARY symbol.
@@ -1411,7 +1385,7 @@ class tetgenmesh {
     int toparraylen;
     char **toparray;
     long objects;
-    ptrdiff_t totalmemory;
+    ULONG totalmemory;
 
     void restart();
     void poolinit(int sizeofobject, int log2objperblk);
@@ -1692,7 +1666,7 @@ class tetgenmesh {
   void planelineint(REAL*, REAL*, REAL*, REAL*, REAL*, REAL*, REAL*);
 
   // Point location routines.
-  ptrdiff_t randomnation(unsigned int choices);
+  ULONG randomnation(unsigned int choices);
   REAL distance2(tetrahedron* tetptr, point p);
   void randomsample(point searchpt, triface *searchtet);
   enum locateresult locate(point searchpt, triface* searchtet);
@@ -2149,7 +2123,7 @@ class tetgenmesh {
   int smoothsegverts;                     // The number of smoothed vertices.
   int jettisoninverts;            // The number of jettisoned input vertices.
   long samples;               // Number of random samples for point location.
-  ptrdiff_t randomseed;                    // Current random number seed.
+  ULONG randomseed;                    // Current random number seed.
   REAL macheps;                                       // The machine epsilon.
   REAL cosmaxdihed, cosmindihed;    // The cosine values of max/min dihedral.
   REAL minfaceang, minfacetdihed;     // The minimum input (dihedral) angles.
@@ -3046,13 +3020,13 @@ inline void tetgenmesh::setshellpbcgroup(face& s, int value) {
 inline void tetgenmesh::sinfect(face& s) {
   ((int *) ((s).sh))[shmarkindex] = 
     (((int *) ((s).sh))[shmarkindex] | (int) 1);
-  // s.sh[6] = (shellface) ((ptrdiff_t) s.sh[6] | (ptrdiff_t) 4l);
+  // s.sh[6] = (shellface) ((ULONG) s.sh[6] | (ULONG) 4l);
 }
 
 inline void tetgenmesh::suninfect(face& s) {
   ((int *) ((s).sh))[shmarkindex] = 
     (((int *) ((s).sh))[shmarkindex] & ~(int) 1);
-  // s.sh[6] = (shellface)((ptrdiff_t) s.sh[6] & ~(ptrdiff_t) 4l);
+  // s.sh[6] = (shellface)((ULONG) s.sh[6] & ~(ULONG) 4l);
 }
 
 // Test a subface for viral infection.
@@ -3361,7 +3335,7 @@ inline bool tetgenmesh::isfacehasedge(face* s, point tend1, point tend2) {
 
 inline bool tetgenmesh::issymexist(triface* t) {
   tetrahedron *ptr = (tetrahedron *) 
-    ((ptrdiff_t)(t->tet[t->loc]) & ~(ptrdiff_t)7l);
+    ((ULONG)(t->tet[t->loc]) & ~(ULONG)7l);
   return ptr != dummytet;
 }
 
