@@ -74,3 +74,9 @@ The code should generate a mesh like the one below:
 * Durand, Farias, and Pedroso (2015) Computing intersections between
   non-compatible curves and finite elements, Computational Mechanics;
   [DOI=10.1007/s00466-015-1181-y](https://link.springer.com/article/10.1007/s00466-015-1181-y)
+
+## Triangle on Windows
+
+Using the fixed code from Kratos
+
+https://github.com/KratosMultiphysics/Kratos/tree/master/external_libraries

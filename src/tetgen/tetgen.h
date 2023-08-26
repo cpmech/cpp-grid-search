@@ -104,6 +104,7 @@
 
 // #define _WIN64
 
+/*
 #ifdef _MSC_VER // Microsoft Visual C++
 #  ifdef _WIN64
      typedef __int64 intptr_t;
@@ -115,6 +116,12 @@
 #else // not Visual C++
 #  include <stdint.h>
 #endif
+*/
+
+//#include <stddef.h>
+//typedef int intptr_t;
+//typedef unsigned int uintptr_t;
+
 
 // To compile TetGen as a library instead of an executable program, define
 //   the TETLIBRARY symbol.
@@ -1404,7 +1411,7 @@ class tetgenmesh {
     int toparraylen;
     char **toparray;
     long objects;
-    unsigned long totalmemory;
+    ptrdiff_t totalmemory;
 
     void restart();
     void poolinit(int sizeofobject, int log2objperblk);
@@ -1685,7 +1692,7 @@ class tetgenmesh {
   void planelineint(REAL*, REAL*, REAL*, REAL*, REAL*, REAL*, REAL*);
 
   // Point location routines.
-  unsigned long randomnation(unsigned int choices);
+  ptrdiff_t randomnation(unsigned int choices);
   REAL distance2(tetrahedron* tetptr, point p);
   void randomsample(point searchpt, triface *searchtet);
   enum locateresult locate(point searchpt, triface* searchtet);
@@ -2142,7 +2149,7 @@ class tetgenmesh {
   int smoothsegverts;                     // The number of smoothed vertices.
   int jettisoninverts;            // The number of jettisoned input vertices.
   long samples;               // Number of random samples for point location.
-  unsigned long randomseed;                    // Current random number seed.
+  ptrdiff_t randomseed;                    // Current random number seed.
   REAL macheps;                                       // The machine epsilon.
   REAL cosmaxdihed, cosmindihed;    // The cosine values of max/min dihedral.
   REAL minfaceang, minfacetdihed;     // The minimum input (dihedral) angles.
@@ -3039,13 +3046,13 @@ inline void tetgenmesh::setshellpbcgroup(face& s, int value) {
 inline void tetgenmesh::sinfect(face& s) {
   ((int *) ((s).sh))[shmarkindex] = 
     (((int *) ((s).sh))[shmarkindex] | (int) 1);
-  // s.sh[6] = (shellface) ((unsigned long) s.sh[6] | (unsigned long) 4l);
+  // s.sh[6] = (shellface) ((ptrdiff_t) s.sh[6] | (ptrdiff_t) 4l);
 }
 
 inline void tetgenmesh::suninfect(face& s) {
   ((int *) ((s).sh))[shmarkindex] = 
     (((int *) ((s).sh))[shmarkindex] & ~(int) 1);
-  // s.sh[6] = (shellface)((unsigned long) s.sh[6] & ~(unsigned long) 4l);
+  // s.sh[6] = (shellface)((ptrdiff_t) s.sh[6] & ~(ptrdiff_t) 4l);
 }
 
 // Test a subface for viral infection.
@@ -3354,7 +3361,7 @@ inline bool tetgenmesh::isfacehasedge(face* s, point tend1, point tend2) {
 
 inline bool tetgenmesh::issymexist(triface* t) {
   tetrahedron *ptr = (tetrahedron *) 
-    ((unsigned long)(t->tet[t->loc]) & ~(unsigned long)7l);
+    ((ptrdiff_t)(t->tet[t->loc]) & ~(ptrdiff_t)7l);
   return ptr != dummytet;
 }
 
