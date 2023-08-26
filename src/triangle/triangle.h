@@ -248,42 +248,60 @@
 /*                                                                           */
 /*****************************************************************************/
 
-struct triangulateio {
-  REAL *pointlist;                                               /* In / out */
-  REAL *pointattributelist;                                      /* In / out */
-  int *pointmarkerlist;                                          /* In / out */
-  int numberofpoints;                                            /* In / out */
-  int numberofpointattributes;                                   /* In / out */
+#if !defined(KRATOS_TRIANGLE_EXTERNAL_H_INCLUDED)
+#define  KRATOS_TRIANGLE_EXTERNAL_H_INCLUDED
 
-  int *trianglelist;                                             /* In / out */
-  REAL *triangleattributelist;                                   /* In / out */
-  REAL *trianglearealist;                                         /* In only */
-  int *neighborlist;                                             /* Out only */
-  int numberoftriangles;                                         /* In / out */
-  int numberofcorners;                                           /* In / out */
-  int numberoftriangleattributes;                                /* In / out */
+#define REAL double
 
-  int *segmentlist;                                              /* In / out */
-  int *segmentmarkerlist;                                        /* In / out */
-  int numberofsegments;                                          /* In / out */
+struct triangulateio
+{
+    REAL *pointlist;                                               /* In / out */
+    REAL *pointattributelist;                                      /* In / out */
+    int *pointmarkerlist;                                          /* In / out */
+    int numberofpoints;                                            /* In / out */
+    int numberofpointattributes;                                   /* In / out */
 
-  REAL *holelist;                        /* In / pointer to array copied out */
-  int numberofholes;                                      /* In / copied out */
+    int *trianglelist;                                             /* In / out */
+    REAL *triangleattributelist;                                   /* In / out */
+    REAL *trianglearealist;                                         /* In only */
+    int *neighborlist;                                             /* Out only */
+    int numberoftriangles;                                         /* In / out */
+    int numberofcorners;                                           /* In / out */
+    int numberoftriangleattributes;                                /* In / out */
 
-  REAL *regionlist;                      /* In / pointer to array copied out */
-  int numberofregions;                                    /* In / copied out */
+    int *segmentlist;                                              /* In / out */
+    int *segmentmarkerlist;                                        /* In / out */
+    int numberofsegments;                                          /* In / out */
 
-  int *edgelist;                                                 /* Out only */
-  int *edgemarkerlist;            /* Not used with Voronoi diagram; out only */
-  REAL *normlist;                /* Used only with Voronoi diagram; out only */
-  int numberofedges;                                             /* Out only */
+    REAL *holelist;                        /* In / pointer to array copied out */
+    int numberofholes;                                      /* In / copied out */
+
+    REAL *regionlist;                      /* In / pointer to array copied out */
+    int numberofregions;                                    /* In / copied out */
+
+    int *edgelist;                                                 /* Out only */
+    int *edgemarkerlist;            /* Not used with Voronoi diagram; out only */
+    REAL *normlist;                /* Used only with Voronoi diagram; out only */
+    int numberofedges;                                             /* Out only */
 };
 
+
+
+//#define ANSI_DECLARATORS
+//#ifdef __cplusplus extern "C"
+//{
+//#endif
+//
 #ifdef ANSI_DECLARATORS
-void triangulate(char *, struct triangulateio *, struct triangulateio *,
-                 struct triangulateio *);
+void triangulate(char *, struct triangulateio *, struct triangulateio *,struct triangulateio *);
 void trifree(VOID *memptr);
 #else /* not ANSI_DECLARATORS */
 void triangulate();
 void trifree();
 #endif /* not ANSI_DECLARATORS */
+//
+//#ifdef __cplusplus extern "C"
+//}
+//#endif
+
+#endif

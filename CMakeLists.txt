@@ -36,6 +36,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 # library ################################################################################
 
+add_definitions(-DTRILIBRARY)
+add_definitions(-DNO_TIMER)
 set(TETLIB_NAME "tetlib")
 set(TRILIB_NAME "trilib")
 
